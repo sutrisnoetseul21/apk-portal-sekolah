@@ -4,7 +4,9 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/storage/session_storage.dart';
 import '../../auth/screens/login_screen.dart';
+import 'jurnal_mengajar_screen.dart';
 import 'presensi_kelas_screen.dart';
+import 'presensi_sholat_dhuhur_screen.dart';
 
 /// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
 /// Menampilkan 9 Menu Kotak-Kotak mengacu pada /portal-guru
@@ -38,6 +40,7 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
   int _activeBooksCount = 0;
   int _pendingKonsultasiCount = 0;
   int _spikapCount = 0;
+  bool _enableSholatDhuhur = true;
   String? _resolvedTeacherName;
 
   late final Dio _dio;
@@ -92,6 +95,7 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
             _pendingKonsultasiCount =
                 (d['pending_konsultasi_count'] as num?)?.toInt() ?? 0;
             _spikapCount = (d['spikap_count'] as num?)?.toInt() ?? 0;
+            _enableSholatDhuhur = d['enable_sholat_dhuhur'] != false;
           });
         }
       }
@@ -103,6 +107,36 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .push(
           MaterialPageRoute(
             builder: (_) => PresensiKelasScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openSholatDhuhurMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => PresensiSholatDhuhurScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openJurnalMengajarMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => JurnalMengajarScreen(
               teacherName: _resolvedTeacherName ?? widget.teacherName,
               token: widget.token,
               identifier: widget.identifier,
@@ -329,18 +363,20 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 onTap: _openPresensiMenu,
               ),
 
-              // MENU 2: Presensi Sholat Dhuhur
-              _PortalMenuBoxCard(
-                number: 2,
-                title: 'Presensi Sholat Dhuhur',
-                description:
-                    'Pencatatan kehadiran sholat dhuhur berjamaah, pemindaian barcode NIS/kartu, serta rekapitulasi kepatuhan ibadah.',
-                badgeText: 'Ibadah Berjamaah',
-                icon: Icons.mosque_outlined,
-                accentColor: const Color(0xFF0D9488),
-                primaryActionLabel: 'Presensi Sholat Dhuhur',
-                onTap: () => _showStepNotice('Presensi Sholat Dhuhur', 2),
-              ),
+              // MENU 2: Presensi Sholat Dhuhur (Aktif jika enable_sholat_dhuhur = true di /admin/pengaturan-presensi)
+              if (_enableSholatDhuhur)
+                _PortalMenuBoxCard(
+                  number: 2,
+                  title: 'Presensi Sholat Dhuhur',
+                  description:
+                      'Pencatatan kehadiran sholat dhuhur berjamaah, sinkron izin/alpa presensi pagi, serta rekapitulasi kepatuhan ibadah.',
+                  badgeText: 'Ibadah Berjamaah',
+                  icon: Icons.mosque_outlined,
+                  accentColor: const Color(0xFF0D9488),
+                  primaryActionLabel: 'Buka Presensi Sholat',
+                  isReady: true,
+                  onTap: _openSholatDhuhurMenu,
+                ),
 
               // MENU 3: Jurnal Mengajar
               _PortalMenuBoxCard(
@@ -353,8 +389,9 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                     : '$_totalJurnalCount Total Jurnal',
                 icon: Icons.menu_book_rounded,
                 accentColor: const Color(0xFF4F46E5),
-                primaryActionLabel: '+ Isi Jurnal & Riwayat',
-                onTap: () => _showStepNotice('Jurnal Mengajar', 3),
+                primaryActionLabel: 'Buka Jurnal Mengajar',
+                isReady: true,
+                onTap: _openJurnalMengajarMenu,
               ),
 
               // MENU 4: Persetujuan Ijin

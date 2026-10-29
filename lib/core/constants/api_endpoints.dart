@@ -24,6 +24,24 @@ class ApiEndpoints {
   static const String guruSholatBulk = '/guru/sholat-dhuhur/bulk';
   static const String guruIzinPending = '/guru/izin/pending';
   static String guruIzinApprove(String id) => '/guru/izin/$id/approve';
-  static const String guruJurnalCreate = '/guru/jurnal/create';
+
+  // Menu 3: Jurnal Mengajar (/portal-guru/jurnal-mengajar)
+  static const String guruJurnalList = '/guru/jurnal-mengajar';
+  static const String guruJurnalFormOptions =
+      '/guru/jurnal-mengajar/form-options';
+  static const String guruJurnalStudents = '/guru/jurnal-mengajar/students';
+  static const String guruJurnalExport = '/guru/jurnal-mengajar/export';
+  static String guruJurnalDetail(String id) => '/guru/jurnal-mengajar/$id';
+  static const String guruJurnalCreate = '/guru/jurnal-mengajar';
+
+  // Menu 4: Persetujuan Ijin (/portal-guru/ijin-kehadiran)
+  static const String guruIjinList = '/guru/ijin-kehadiran';
+  static const String guruIjinNotifCheck =
+      '/guru/ijin-kehadiran/notification-check';
+  static String guruIjinDetail(String id) => '/guru/ijin-kehadiran/$id';
+  static String guruIjinApprove(String id) =>
+      '/guru/ijin-kehadiran/$id/approve';
+  static String guruIjinReject(String id) => '/guru/ijin-kehadiran/$id/reject';
+  static String guruIjinReset(String id) => '/guru/ijin-kehadiran/$id/reset';
 }
 
