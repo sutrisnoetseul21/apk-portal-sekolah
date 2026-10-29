@@ -1,0 +1,599 @@
+import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/storage/session_storage.dart';
+import '../../auth/screens/login_screen.dart';
+import 'presensi_kelas_screen.dart';
+
+/// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
+/// Menampilkan 9 Menu Kotak-Kotak mengacu pada /portal-guru
+class DashboardGuruScreen extends StatefulWidget {
+  final String teacherName;
+  final String identifier;
+  final String roleLabel;
+  final String schoolName;
+  final String? token;
+
+  const DashboardGuruScreen({
+    super.key,
+    required this.teacherName,
+    required this.identifier,
+    this.roleLabel = 'Wali Kelas / Guru',
+    this.schoolName = 'SMP Negeri 3 Kedungreja',
+    this.token,
+  });
+
+  @override
+  State<DashboardGuruScreen> createState() => _DashboardGuruScreenState();
+}
+
+class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
+  int _kelasAmpuCount = 0;
+  int _jurnalHariIniCount = 0;
+  int _totalJurnalCount = 0;
+  int _pendingLeaveCount = 0;
+  int _approvedLeaveCount = 0;
+  int _rejectedLeaveCount = 0;
+  int _activeBooksCount = 0;
+  int _pendingKonsultasiCount = 0;
+  int _spikapCount = 0;
+  String? _resolvedTeacherName;
+
+  late final Dio _dio;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolvedTeacherName = widget.teacherName;
+    _dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 8),
+        headers: {
+          'Accept': 'application/json',
+          if (widget.token != null && widget.token!.isNotEmpty)
+            'Authorization': 'Bearer ${widget.token}',
+          if (widget.identifier.isNotEmpty)
+            'X-User-Identifier': widget.identifier,
+        },
+      ),
+    );
+    _fetchSummary();
+  }
+
+  Future<void> _fetchSummary() async {
+    try {
+      final response = await _dio.get(
+        '${AppConfig.baseUrl}/guru/dashboard-summary',
+        queryParameters: {'identifier': widget.identifier},
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final d = response.data['data'] as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            if (d['teacher_name'] != null &&
+                d['teacher_name'].toString().isNotEmpty) {
+              _resolvedTeacherName = d['teacher_name'].toString();
+            }
+            _kelasAmpuCount = (d['kelas_ampu_count'] as num?)?.toInt() ?? 0;
+            _jurnalHariIniCount =
+                (d['jurnal_hari_ini_count'] as num?)?.toInt() ?? 0;
+            _totalJurnalCount =
+                (d['total_jurnal_count'] as num?)?.toInt() ?? 0;
+            _pendingLeaveCount =
+                (d['pending_leave_count'] as num?)?.toInt() ?? 0;
+            _approvedLeaveCount =
+                (d['approved_leave_count'] as num?)?.toInt() ?? 0;
+            _rejectedLeaveCount =
+                (d['rejected_leave_count'] as num?)?.toInt() ?? 0;
+            _activeBooksCount =
+                (d['active_books_count'] as num?)?.toInt() ?? 0;
+            _pendingKonsultasiCount =
+                (d['pending_konsultasi_count'] as num?)?.toInt() ?? 0;
+            _spikapCount = (d['spikap_count'] as num?)?.toInt() ?? 0;
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _openPresensiMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => PresensiKelasScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _showStepNotice(String menuTitle, int stepNumber) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Menu $stepNumber ($menuTitle) akan dikerjakan pada tahap berikutnya.',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = _resolvedTeacherName ?? widget.teacherName;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Portal Guru',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              widget.schoolName,
+              style: const TextStyle(fontSize: 11, color: Colors.white70),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Segarkan',
+            onPressed: _fetchSummary,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Keluar Portal',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  title: const Text(
+                    'Keluar dari Portal?',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                  ),
+                  content: const Text(
+                    'Apakah Anda yakin ingin keluar dari akun Portal Guru?',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Batal'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Ya, Keluar'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await SessionStorage.clearSession();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _fetchSummary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // =========================================================
+              // 1. HERO WELCOME CARD (Mengacu pada /portal-guru)
+              // =========================================================
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF4F46E5),
+                      AppColors.primary,
+                      Color(0xFF3730A3),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'PORTAL GURU',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Selamat Datang, $displayName!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Kelola absensi kelas binaan, tanggapi permohonan ijin siswa, pendampingan SI-WALI, dan akses layanan akademik dari satu tempat.',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // =========================================================
+              // 2. HEADER PINTASAN 9 MENU KOTAK-KOTAK (TANPA SIDEBAR KIRI)
+              // =========================================================
+              const Row(
+                children: [
+                  Icon(
+                    Icons.grid_view_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Pintasan Menu Utama Guru',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'Akses cepat ke modul operasional harian guru dan wali kelas:',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // =========================================================
+              // 3. DAFTAR 9 KOTAK MENU PORTAL GURU (URUT SESUAI PLAN)
+              // =========================================================
+
+              // MENU 1: Presensi (Aktif Penuh - Tahap 1)
+              _PortalMenuBoxCard(
+                number: 1,
+                title: 'Presensi',
+                description:
+                    'Pantau absensi harian siswa, matriks bulanan, input manual, kirim WA ortu, dan cetak laporan presensi kelas.',
+                badgeText: '$_kelasAmpuCount Kelas',
+                icon: Icons.verified_user_outlined,
+                accentColor: const Color(0xFF059669),
+                primaryActionLabel: 'Buka Presensi Kelas',
+                isReady: true,
+                onTap: _openPresensiMenu,
+              ),
+
+              // MENU 2: Presensi Sholat Dhuhur
+              _PortalMenuBoxCard(
+                number: 2,
+                title: 'Presensi Sholat Dhuhur',
+                description:
+                    'Pencatatan kehadiran sholat dhuhur berjamaah, pemindaian barcode NIS/kartu, serta rekapitulasi kepatuhan ibadah.',
+                badgeText: 'Ibadah Berjamaah',
+                icon: Icons.mosque_outlined,
+                accentColor: const Color(0xFF0D9488),
+                primaryActionLabel: 'Presensi Sholat Dhuhur',
+                onTap: () => _showStepNotice('Presensi Sholat Dhuhur', 2),
+              ),
+
+              // MENU 3: Jurnal Mengajar
+              _PortalMenuBoxCard(
+                number: 3,
+                title: 'Jurnal Mengajar',
+                description:
+                    'Dokumentasi materi pembelajaran harian, pencatatan kehadiran siswa per jam pelajaran, dan unduh rekap PDF.',
+                badgeText: _jurnalHariIniCount > 0
+                    ? '$_jurnalHariIniCount Terisi Hari Ini'
+                    : '$_totalJurnalCount Total Jurnal',
+                icon: Icons.menu_book_rounded,
+                accentColor: const Color(0xFF4F46E5),
+                primaryActionLabel: '+ Isi Jurnal & Riwayat',
+                onTap: () => _showStepNotice('Jurnal Mengajar', 3),
+              ),
+
+              // MENU 4: Persetujuan Ijin
+              _PortalMenuBoxCard(
+                number: 4,
+                title: 'Persetujuan Ijin',
+                description:
+                    'Tinjau dan proses permohonan ijin atau sakit siswa (Diterima: $_approvedLeaveCount • Ditolak: $_rejectedLeaveCount • Menunggu: $_pendingLeaveCount).',
+                badgeText: _pendingLeaveCount > 0
+                    ? '$_pendingLeaveCount Pending'
+                    : 'Bersih',
+                icon: Icons.assignment_turned_in_outlined,
+                accentColor: const Color(0xFFE11D48),
+                primaryActionLabel: 'Buka Persetujuan',
+                onTap: () => _showStepNotice('Persetujuan Ijin', 4),
+              ),
+
+              // MENU 5: Guru Wali (SI-WALI)
+              _PortalMenuBoxCard(
+                number: 5,
+                title: 'Guru Wali (SI-WALI)',
+                description:
+                    'Kelola kelompok dampingan Permen 11/2025, tulis jurnal bimbingan, ruang aman bercerita, dan pantau rekam jejak murid.',
+                badgeText: _pendingKonsultasiCount > 0
+                    ? '$_pendingKonsultasiCount Menunggu Cerita'
+                    : 'Permen 11/2025',
+                icon: Icons.favorite_border_rounded,
+                accentColor: const Color(0xFF2563EB),
+                primaryActionLabel: 'Buka SI-WALI',
+                onTap: () => _showStepNotice('Guru Wali', 5),
+              ),
+
+              // MENU 6: Data Siswa
+              _PortalMenuBoxCard(
+                number: 6,
+                title: 'Data Siswa',
+                description:
+                    'Kelola data siswa binaan Anda, lihat informasi kontak orang tua, dan pratinjau kartu pelajar QR/Barcode.',
+                badgeText: 'QR & Barcode',
+                icon: Icons.badge_outlined,
+                accentColor: const Color(0xFF7C3AED),
+                primaryActionLabel: 'Buka Data Siswa',
+                onTap: () => _showStepNotice('Data Siswa', 6),
+              ),
+
+              // MENU 7: SPIKAP (Anti-Perundungan & Pengaduan Siswa)
+              _PortalMenuBoxCard(
+                number: 7,
+                title: 'SPIKAP (Anti-Perundungan & Pengaduan Siswa)',
+                description:
+                    'Layanan penanganan perundungan siswa, pantau aduan masuk, dan investigasi tindak lanjut.',
+                badgeText: '$_spikapCount Laporan',
+                icon: Icons.warning_amber_rounded,
+                accentColor: const Color(0xFFDC2626),
+                primaryActionLabel: 'Buka SPIKAP',
+                onTap: () => _showStepNotice('SPIKAP', 7),
+              ),
+
+              // MENU 8: Perpustakaan
+              _PortalMenuBoxCard(
+                number: 8,
+                title: 'Perpustakaan',
+                description:
+                    'Cari koleksi katalog perpustakaan sekolah dan pantau riwayat buku yang sedang Anda pinjam.',
+                badgeText: '$_activeBooksCount Dipinjam',
+                icon: Icons.local_library_outlined,
+                accentColor: const Color(0xFFD97706),
+                primaryActionLabel: 'Buka Perpustakaan',
+                onTap: () => _showStepNotice('Perpustakaan', 8),
+              ),
+
+              // MENU 9: Profil Saya
+              _PortalMenuBoxCard(
+                number: 9,
+                title: 'Profil Saya',
+                description:
+                    'Lihat informasi NIP, penugasan akademik, perbarui foto, email, dan ganti kata sandi akun.',
+                badgeText: 'Biodata & Akun',
+                icon: Icons.person_outline_rounded,
+                accentColor: const Color(0xFF0284C7),
+                primaryActionLabel: 'Lihat Profil',
+                onTap: () => _showStepNotice('Profil Saya', 9),
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget Kotak Menu Portal Guru (Mengikuti desain Card di /portal-guru)
+class _PortalMenuBoxCard extends StatelessWidget {
+  final int number;
+  final String title;
+  final String description;
+  final String badgeText;
+  final IconData icon;
+  final Color accentColor;
+  final String primaryActionLabel;
+  final bool isReady;
+  final VoidCallback onTap;
+
+  const _PortalMenuBoxCard({
+    required this.number,
+    required this.title,
+    required this.description,
+    required this.badgeText,
+    required this.icon,
+    required this.accentColor,
+    required this.primaryActionLabel,
+    this.isReady = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isReady
+              ? accentColor.withValues(alpha: 0.45)
+              : AppColors.border,
+          width: isReady ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: accentColor, size: 23),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Text(
+                      badgeText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: isReady ? accentColor : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: isReady
+                      ? null
+                      : Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      primaryActionLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: isReady
+                            ? Colors.white
+                            : const Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 15,
+                      color: isReady ? Colors.white : const Color(0xFF334155),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
