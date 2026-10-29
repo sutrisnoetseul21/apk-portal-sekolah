@@ -8,6 +8,7 @@ import 'jurnal_mengajar_screen.dart';
 import 'ijin_kehadiran_screen.dart';
 import 'presensi_kelas_screen.dart';
 import 'presensi_sholat_dhuhur_screen.dart';
+import 'guru_wali_screen.dart';
 
 /// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
 /// Menampilkan 9 Menu Kotak-Kotak mengacu pada /portal-guru
@@ -153,6 +154,21 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .push(
           MaterialPageRoute(
             builder: (_) => IjinKehadiranScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openGuruWaliMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => GuruWaliScreen(
               teacherName: _resolvedTeacherName ?? widget.teacherName,
               token: widget.token,
               identifier: widget.identifier,
@@ -406,6 +422,85 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 ),
               ],
 
+              // IN-APP NOTIFICATION BANNER (Jika ada konsultasi/cerita siswa baru)
+              if (_pendingKonsultasiCount > 0) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF93C5FD)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.forum_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Ruang Aman Cerita: Pesan Baru',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF1E40AF),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Ada $_pendingKonsultasiCount murid binaan mengirim pesan atau permohonan konsultasi.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF1E3A8A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: _openGuruWaliMenu,
+                        child: const Text(
+                          'Buka',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 20),
 
               // =========================================================
@@ -517,7 +612,8 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 icon: Icons.favorite_border_rounded,
                 accentColor: const Color(0xFF2563EB),
                 primaryActionLabel: 'Buka SI-WALI',
-                onTap: () => _showStepNotice('Guru Wali', 5),
+                isReady: true,
+                onTap: _openGuruWaliMenu,
               ),
 
               // MENU 6: Data Siswa
