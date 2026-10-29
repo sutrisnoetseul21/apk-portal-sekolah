@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../models/leave_request_model.dart';
+import '../services/ijin_kehadiran_service.dart';
 
 /// Halaman Menu 4: Persetujuan Ijin Siswa
-/// Diselaraskan 100% dengan Livewire /portal-guru/ijin-kehadiran
+/// Terintegrasi dengan IjinKehadiranService & LeaveRequestModel
 class IjinKehadiranScreen extends StatefulWidget {
   final String teacherName;
   final String? token;
@@ -27,7 +26,7 @@ class IjinKehadiranScreen extends StatefulWidget {
 }
 
 class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
-  late final Dio _dio;
+  late final IjinKehadiranService _service;
 
   bool _isLoading = true;
   String _activeTab = 'all'; // 'all', 'pending', 'approved', 'rejected'
@@ -59,7 +58,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
   };
 
   // Data List
-  List<Map<String, dynamic>> _requests = [];
+  List<LeaveRequestItemModel> _requests = [];
   int _currentPage = 1;
   int _lastPage = 1;
   int _totalItems = 0;
@@ -67,18 +66,9 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
   @override
   void initState() {
     super.initState();
-    _dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 12),
-        receiveTimeout: const Duration(seconds: 12),
-        headers: {
-          'Accept': 'application/json',
-          if (widget.token != null && widget.token!.isNotEmpty)
-            'Authorization': 'Bearer ${widget.token}',
-          if (widget.identifier != null && widget.identifier!.isNotEmpty)
-            'X-User-Identifier': widget.identifier,
-        },
-      ),
+    _service = IjinKehadiranService.create(
+      token: widget.token,
+      identifier: widget.identifier,
     );
     _loadData();
   }
@@ -92,70 +82,46 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
   Future<void> _loadData({int page = 1}) async {
     setState(() => _isLoading = true);
     try {
-      final response = await _dio.get(
-        '${AppConfig.baseUrl}${ApiEndpoints.guruIjinList}',
-        queryParameters: {
-          'status': _activeTab,
-          if (_selectedClassId != null && _selectedClassId!.isNotEmpty)
-            'class_id': _selectedClassId,
-          if (_selectedMonthKey != null && _selectedMonthKey!.isNotEmpty)
-            'month': _selectedMonthKey,
-          if (_searchQuery.trim().isNotEmpty) 'search': _searchQuery.trim(),
-          'page': page,
-          if (widget.identifier != null) 'identifier': widget.identifier,
-        },
+      final res = await _service.getLeaveRequests(
+        status: _activeTab,
+        classId: _selectedClassId,
+        month: _selectedMonthKey,
+        search: _searchQuery,
+        page: page,
+        identifier: widget.identifier,
       );
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final data = response.data['data'] as Map<String, dynamic>;
-        if (mounted) {
-          setState(() {
-            _requests = List<Map<String, dynamic>>.from(
-              (data['requests'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
-            );
+      if (mounted) {
+        setState(() {
+          _requests = res.requests;
+          _currentPage = res.currentPage;
+          _lastPage = res.lastPage;
+          _totalItems = res.total;
+          _todayStats = {
+            'pending': res.todayStats.pending,
+            'approved': res.todayStats.approved,
+            'rejected': res.todayStats.rejected,
+            'total': res.todayStats.total,
+          };
+          _accessibleClasses = res.accessibleClasses;
+          _availableMonths = res.availableMonths;
+          _userInfo = res.userInfo;
+          _academicYear = res.academicYear;
 
-            final pagination = data['pagination'] as Map<String, dynamic>? ?? {};
-            _currentPage = (pagination['current_page'] as num?)?.toInt() ?? 1;
-            _lastPage = (pagination['last_page'] as num?)?.toInt() ?? 1;
-            _totalItems = (pagination['total'] as num?)?.toInt() ?? 0;
+          if (_selectedMonthKey == null && _availableMonths.isNotEmpty) {
+            _selectedMonthKey = _availableMonths.first['key']?.toString();
+          }
 
-            if (data['today_stats'] is Map) {
-              _todayStats = Map<String, dynamic>.from(data['today_stats'] as Map);
-            }
-
-            if (data['user_info'] is Map) {
-              _userInfo = Map<String, dynamic>.from(data['user_info'] as Map);
-            }
-
-            if (data['academic_year'] is Map) {
-              _academicYear = Map<String, dynamic>.from(data['academic_year'] as Map);
-            }
-
-            _accessibleClasses = List<Map<String, dynamic>>.from(
-              (data['accessible_classes'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
-            );
-
-            _availableMonths = List<Map<String, dynamic>>.from(
-              (data['available_months'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
-            );
-
-            if (_selectedMonthKey == null && _availableMonths.isNotEmpty) {
-              _selectedMonthKey = _availableMonths.first['key']?.toString();
-            }
-
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          _showSnackBar(response.data['message'] ?? 'Gagal memuat data.', isError: true);
-        }
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar('Terjadi gangguan jaringan: $e', isError: true);
+        _showSnackBar(
+          e.toString().replaceAll('Exception: ', ''),
+          isError: true,
+        );
       }
     }
   }
@@ -164,7 +130,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? const Color(0xFFDC2626) : const Color(0xFF059669),
+        backgroundColor:
+            isError ? const Color(0xFFDC2626) : const Color(0xFF059669),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -209,16 +176,12 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // =========================================================
               // 1. HERO BANNER
-              // =========================================================
               _buildHeroBanner(),
 
               const SizedBox(height: 16),
 
-              // =========================================================
               // 2. TIGA KARTU STATISTIK METRIK
-              // =========================================================
               Row(
                 children: [
                   Expanded(
@@ -273,23 +236,17 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 
               const SizedBox(height: 16),
 
-              // =========================================================
               // 3. SEGMENTED TABS FILTER
-              // =========================================================
               _buildSegmentedTabs(pendingCount),
 
               const SizedBox(height: 14),
 
-              // =========================================================
               // 4. FILTER KELAS, BULAN & PENCARIAN SISWA
-              // =========================================================
               _buildFilterCard(),
 
               const SizedBox(height: 16),
 
-              // =========================================================
               // 5. DAFTAR PERMOHONAN SISWA
-              // =========================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -336,9 +293,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 
               const SizedBox(height: 16),
 
-              // =========================================================
-              // 6. PAGINASI KONTROL (Jika > 1 halaman)
-              // =========================================================
+              // 6. PAGINASI KONTROL
               if (_lastPage > 1) _buildPaginationBar(),
 
               const SizedBox(height: 24),
@@ -355,7 +310,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 
   Widget _buildHeroBanner() {
     final roleSummary = _userInfo['role_summary']?.toString() ?? 'Wali Kelas';
-    final academicName = _academicYear['name']?.toString() ?? 'Tahun Ajaran Aktif';
+    final academicName =
+        _academicYear['name']?.toString() ?? 'Tahun Ajaran Aktif';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -454,7 +410,9 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: isActive ? color.withOpacity(0.12) : Colors.black.withOpacity(0.02),
+              color: isActive
+                  ? color.withOpacity(0.12)
+                  : Colors.black.withOpacity(0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -556,14 +514,18 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                       t['label'] as String,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                        color: isSelected ? AppColors.primary : const Color(0xFF475569),
+                        fontWeight:
+                            isSelected ? FontWeight.w900 : FontWeight.w600,
+                        color: isSelected
+                            ? AppColors.primary
+                            : const Color(0xFF475569),
                       ),
                     ),
                     if (badge > 0) ...[
                       const SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: const Color(0xFFE11D48),
                           borderRadius: BorderRadius.circular(8),
@@ -610,15 +572,20 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                         isExpanded: true,
                         decoration: InputDecoration(
                           labelText: 'PILIH KELAS',
-                          labelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                          prefixIcon: const Icon(Icons.class_rounded, size: 16),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          labelStyle: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.bold),
+                          prefixIcon:
+                              const Icon(Icons.class_rounded, size: 16),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                         items: [
                           const DropdownMenuItem<String>(
                             value: '',
-                            child: Text('Semua Kelas', style: TextStyle(fontSize: 12)),
+                            child: Text('Semua Kelas',
+                                style: TextStyle(fontSize: 12)),
                           ),
                           ..._accessibleClasses.map(
                             (c) => DropdownMenuItem<String>(
@@ -637,7 +604,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                         },
                       )
                     : Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(10),
@@ -645,7 +613,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.class_rounded, size: 16, color: Color(0xFF64748B)),
+                            const Icon(Icons.class_rounded,
+                                size: 16, color: Color(0xFF64748B)),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -653,13 +622,18 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                                 children: [
                                   const Text(
                                     'KELAS BINAAN',
-                                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF64748B)),
                                   ),
                                   Text(
                                     _accessibleClasses.isNotEmpty
                                         ? 'Kelas ${_accessibleClasses.first['name'] ?? '-'}'
                                         : 'Belum Ada Kelas',
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -678,21 +652,27 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'BULAN PENGAJUAN',
-                    labelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                    prefixIcon: const Icon(Icons.calendar_month_rounded, size: 16),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    labelStyle: const TextStyle(
+                        fontSize: 10, fontWeight: FontWeight.bold),
+                    prefixIcon:
+                        const Icon(Icons.calendar_month_rounded, size: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  items: _availableMonths.map(
-                    (m) => DropdownMenuItem<String>(
-                      value: m['key']?.toString(),
-                      child: Text(
-                        m['label']?.toString() ?? '',
-                        style: const TextStyle(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ).toList(),
+                  items: _availableMonths
+                      .map(
+                        (m) => DropdownMenuItem<String>(
+                          value: m['key']?.toString(),
+                          child: Text(
+                            m['label']?.toString() ?? '',
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (val) {
                     if (val != null && val != _selectedMonthKey) {
                       setState(() => _selectedMonthKey = val);
@@ -712,7 +692,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
             style: const TextStyle(fontSize: 12.5),
             decoration: InputDecoration(
               hintText: 'Cari nama siswa atau NISN...',
-              hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              hintStyle:
+                  const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
               prefixIcon: const Icon(Icons.search_rounded, size: 18),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -724,8 +705,10 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onSubmitted: (val) {
               setState(() => _searchQuery = val);
@@ -786,44 +769,26 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
               _loadData(page: 1);
             },
             icon: const Icon(Icons.refresh_rounded, size: 15),
-            label: const Text('Reset Filter & Muat Ulang', style: TextStyle(fontSize: 12)),
+            label: const Text('Reset Filter & Muat Ulang',
+                style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLeaveRequestCard(Map<String, dynamic> item) {
-    final status = item['status']?.toString() ?? 'pending';
-    final type = item['type']?.toString() ?? 'ijin';
-    final isSakit = type == 'sakit';
-    final isPending = status == 'pending';
-    final isApproved = status == 'approved';
-
-    final studentName = item['student_name']?.toString() ?? 'Siswa';
-    final className = item['class_name']?.toString() ?? '-';
-    final nisn = item['student_nisn']?.toString() ?? '-';
-    final durationLabel = item['duration_label']?.toString() ?? '1 Hari';
-    final startDate = item['start_date_formatted']?.toString() ?? '-';
-    final endDate = item['end_date_formatted']?.toString() ?? '-';
-    final dateRange = startDate == endDate ? startDate : '$startDate - $endDate';
-    final reason = item['reason']?.toString() ?? '-';
-    final canApprove = item['can_approve'] == true;
-
-    final attachments = (item['attachments'] as List? ?? []);
-    final thumbnailUrl = item['thumbnail_url']?.toString();
-
+  Widget _buildLeaveRequestCard(LeaveRequestItemModel item) {
     Color statusColor;
     Color statusBgColor;
     String statusText;
     IconData statusIcon;
 
-    if (isApproved) {
+    if (item.isApproved) {
       statusColor = const Color(0xFF059669);
       statusBgColor = const Color(0xFFECFDF5);
       statusText = 'Disetujui';
       statusIcon = Icons.check_circle_rounded;
-    } else if (status == 'rejected') {
+    } else if (item.isRejected) {
       statusColor = const Color(0xFFDC2626);
       statusBgColor = const Color(0xFFFEF2F2);
       statusText = 'Ditolak';
@@ -840,8 +805,10 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isPending ? const Color(0xFFFDE68A) : AppColors.border,
-          width: isPending ? 1.4 : 1,
+          color: item.isPending
+              ? const Color(0xFFFDE68A)
+              : AppColors.border,
+          width: item.isPending ? 1.4 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -855,7 +822,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _openDetailModal(item['id']?.toString() ?? ''),
+          onTap: () => _openDetailModal(item.id),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -866,11 +833,15 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                   children: [
                     CircleAvatar(
                       radius: 19,
-                      backgroundColor: isSakit ? const Color(0xFFFFE4E6) : const Color(0xFFDCFCE7),
+                      backgroundColor: item.isSakit
+                          ? const Color(0xFFFFE4E6)
+                          : const Color(0xFFDCFCE7),
                       child: Text(
-                        _getInitials(studentName),
+                        item.initials,
                         style: TextStyle(
-                          color: isSakit ? const Color(0xFFE11D48) : const Color(0xFF16A34A),
+                          color: item.isSakit
+                              ? const Color(0xFFE11D48)
+                              : const Color(0xFF16A34A),
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
                         ),
@@ -882,7 +853,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            studentName,
+                            item.studentName,
                             style: const TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w900,
@@ -891,7 +862,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Kelas $className • NISN: $nisn',
+                            'Kelas ${item.className} • NISN: ${item.studentNisn}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF64748B),
@@ -902,26 +873,35 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                     ),
                     // Badge Jenis: Izin / Sakit
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: isSakit ? const Color(0xFFFFE4E6) : const Color(0xFFDCFCE7),
+                        color: item.isSakit
+                            ? const Color(0xFFFFE4E6)
+                            : const Color(0xFFDCFCE7),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isSakit ? Icons.medical_services_outlined : Icons.event_note_rounded,
+                            item.isSakit
+                                ? Icons.medical_services_outlined
+                                : Icons.event_note_rounded,
                             size: 11,
-                            color: isSakit ? const Color(0xFFE11D48) : const Color(0xFF16A34A),
+                            color: item.isSakit
+                                ? const Color(0xFFE11D48)
+                                : const Color(0xFF16A34A),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isSakit ? 'Sakit' : 'Izin',
+                            item.typeLabel,
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.bold,
-                              color: isSakit ? const Color(0xFFE11D48) : const Color(0xFF16A34A),
+                              color: item.isSakit
+                                  ? const Color(0xFFE11D48)
+                                  : const Color(0xFF16A34A),
                             ),
                           ),
                         ],
@@ -937,11 +917,12 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                 // Info Rentang Tanggal & Durasi
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF475569)),
+                    const Icon(Icons.calendar_today_rounded,
+                        size: 13, color: Color(0xFF475569)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        '$dateRange ($durationLabel)',
+                        '${item.dateRange} (${item.durationLabel})',
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -956,7 +937,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 
                 // Cuplikan Alasan Izin
                 Text(
-                  reason,
+                  item.reason,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -967,14 +948,15 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                 ),
 
                 // Pratinjau Thumbnail Lampiran (Jika Ada)
-                if (attachments.isNotEmpty) ...[
+                if (item.attachments.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.attach_file_rounded, size: 13, color: Color(0xFF64748B)),
+                      const Icon(Icons.attach_file_rounded,
+                          size: 13, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),
                       Text(
-                        '${attachments.length} Berkas Lampiran',
+                        '${item.attachments.length} Berkas Lampiran',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -982,15 +964,17 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                         ),
                       ),
                       const Spacer(),
-                      if (thumbnailUrl != null)
+                      if (item.thumbnailUrl != null)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: Image.network(
-                            thumbnailUrl,
+                            item.thumbnailUrl!,
                             width: 32,
                             height: 32,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.image_outlined, size: 20),
+                            errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_outlined,
+                                size: 20),
                           ),
                         ),
                     ],
@@ -1005,7 +989,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: statusBgColor,
                         borderRadius: BorderRadius.circular(8),
@@ -1029,22 +1014,33 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                     const Spacer(),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isPending && canApprove ? AppColors.primary : const Color(0xFFF1F5F9),
-                        foregroundColor: isPending && canApprove ? Colors.white : const Color(0xFF334155),
-                        elevation: isPending && canApprove ? 1 : 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        backgroundColor: item.isPending && item.canApprove
+                            ? AppColors.primary
+                            : const Color(0xFFF1F5F9),
+                        foregroundColor: item.isPending && item.canApprove
+                            ? Colors.white
+                            : const Color(0xFF334155),
+                        elevation: item.isPending && item.canApprove ? 1 : 0,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      onPressed: () => _openDetailModal(item['id']?.toString() ?? ''),
+                      onPressed: () => _openDetailModal(item.id),
                       icon: Icon(
-                        isPending && canApprove ? Icons.gavel_rounded : Icons.visibility_outlined,
+                        item.isPending && item.canApprove
+                            ? Icons.gavel_rounded
+                            : Icons.visibility_outlined,
                         size: 13,
                       ),
                       label: Text(
-                        isPending && canApprove ? 'Tinjau & Putuskan' : 'Lihat Detail',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        item.isPending && item.canApprove
+                            ? 'Tinjau & Putuskan'
+                            : 'Lihat Detail',
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1070,17 +1066,22 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
         children: [
           Text(
             'Halaman $_currentPage dari $_lastPage',
-            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+            style:
+                const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
           ),
           Row(
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
-                onPressed: _currentPage > 1 ? () => _loadData(page: _currentPage - 1) : null,
+                onPressed: _currentPage > 1
+                    ? () => _loadData(page: _currentPage - 1)
+                    : null,
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
-                onPressed: _currentPage < _lastPage ? () => _loadData(page: _currentPage + 1) : null,
+                onPressed: _currentPage < _lastPage
+                    ? () => _loadData(page: _currentPage + 1)
+                    : null,
               ),
             ],
           ),
@@ -1101,23 +1102,13 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
       builder: (ctx) {
         return _DetailIjinModal(
           recordId: recordId,
-          dio: _dio,
+          service: _service,
           onStatusChanged: () {
             _loadData(page: _currentPage);
           },
         );
       },
     );
-  }
-
-  String _getInitials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
-      return parts[0].substring(0, 1).toUpperCase();
-    }
-    return 'S';
   }
 }
 
@@ -1126,12 +1117,12 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 /// =========================================================================
 class _DetailIjinModal extends StatefulWidget {
   final String recordId;
-  final Dio dio;
+  final IjinKehadiranService service;
   final VoidCallback onStatusChanged;
 
   const _DetailIjinModal({
     required this.recordId,
-    required this.dio,
+    required this.service,
     required this.onStatusChanged,
   });
 
@@ -1153,27 +1144,17 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
   Future<void> _fetchDetail() async {
     setState(() => _isLoading = true);
     try {
-      final response = await widget.dio.get(
-        '${AppConfig.baseUrl}${ApiEndpoints.guruIjinDetail(widget.recordId)}',
-      );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        if (mounted) {
-          setState(() {
-            _detail = Map<String, dynamic>.from(response.data['data'] as Map);
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          Navigator.pop(context);
-          _showToast(response.data['message'] ?? 'Gagal memuat detail izin.', isError: true);
-        }
+      final data = await widget.service.getLeaveRequestDetail(widget.recordId);
+      if (mounted) {
+        setState(() {
+          _detail = data;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        _showToast('Terjadi kesalahan jaringan: $e', isError: true);
+        _showToast(e.toString().replaceAll('Exception: ', ''), isError: true);
       }
     }
   }
@@ -1182,7 +1163,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? const Color(0xFFDC2626) : const Color(0xFF059669),
+        backgroundColor:
+            isError ? const Color(0xFFDC2626) : const Color(0xFF059669),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -1192,8 +1174,10 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Setujui Permohonan?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Setujui Permohonan?',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: const Text(
           'Presensi siswa pada tanggal KBM efektif sekolah akan otomatis terisi sebagai Izin/Sakit di tabel presensi.',
           style: TextStyle(fontSize: 13),
@@ -1219,19 +1203,12 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
 
     setState(() => _isActionProcessing = true);
     try {
-      final response = await widget.dio.post(
-        '${AppConfig.baseUrl}${ApiEndpoints.guruIjinApprove(widget.recordId)}',
-      );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        _showToast(response.data['message'] ?? 'Izin berhasil disetujui.');
-        widget.onStatusChanged();
-        if (mounted) Navigator.pop(context);
-      } else {
-        _showToast(response.data['message'] ?? 'Gagal menyetujui izin.', isError: true);
-      }
+      final res = await widget.service.approveLeaveRequest(widget.recordId);
+      _showToast(res['message']?.toString() ?? 'Izin berhasil disetujui.');
+      widget.onStatusChanged();
+      if (mounted) Navigator.pop(context);
     } catch (e) {
-      _showToast('Gagal: $e', isError: true);
+      _showToast(e.toString().replaceAll('Exception: ', ''), isError: true);
     } finally {
       if (mounted) setState(() => _isActionProcessing = false);
     }
@@ -1244,8 +1221,10 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Tolak Permohonan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Tolak Permohonan',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: Form(
           key: formKey,
           child: Column(
@@ -1262,8 +1241,10 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                 maxLines: 3,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'Contoh: Surat dokter tidak valid / tidak ada cap...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  hintText:
+                      'Contoh: Surat dokter tidak valid / tidak ada cap...',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 3) {
@@ -1300,20 +1281,14 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
 
     setState(() => _isActionProcessing = true);
     try {
-      final response = await widget.dio.post(
-        '${AppConfig.baseUrl}${ApiEndpoints.guruIjinReject(widget.recordId)}',
-        data: {'reason': reason},
-      );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        _showToast(response.data['message'] ?? 'Permohonan berhasil ditolak.');
-        widget.onStatusChanged();
-        if (mounted) Navigator.pop(context);
-      } else {
-        _showToast(response.data['message'] ?? 'Gagal menolak izin.', isError: true);
-      }
+      final res =
+          await widget.service.rejectLeaveRequest(widget.recordId, reason);
+      _showToast(
+          res['message']?.toString() ?? 'Permohonan berhasil ditolak.');
+      widget.onStatusChanged();
+      if (mounted) Navigator.pop(context);
     } catch (e) {
-      _showToast('Gagal: $e', isError: true);
+      _showToast(e.toString().replaceAll('Exception: ', ''), isError: true);
     } finally {
       if (mounted) setState(() => _isActionProcessing = false);
     }
@@ -1323,8 +1298,10 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Kembalikan ke Pending?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Kembalikan ke Pending?',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: const Text(
           'Catatan presensi otomatis (jika ada) akan dicabut dan status kembali menjadi menunggu verifikasi.',
           style: TextStyle(fontSize: 13),
@@ -1350,19 +1327,12 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
 
     setState(() => _isActionProcessing = true);
     try {
-      final response = await widget.dio.post(
-        '${AppConfig.baseUrl}${ApiEndpoints.guruIjinReset(widget.recordId)}',
-      );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        _showToast(response.data['message'] ?? 'Status berhasil dikembalikan.');
-        widget.onStatusChanged();
-        if (mounted) Navigator.pop(context);
-      } else {
-        _showToast(response.data['message'] ?? 'Gagal mereset status.', isError: true);
-      }
+      final res = await widget.service.resetLeaveRequest(widget.recordId);
+      _showToast(res['message']?.toString() ?? 'Status berhasil dikembalikan.');
+      widget.onStatusChanged();
+      if (mounted) Navigator.pop(context);
     } catch (e) {
-      _showToast('Gagal: $e', isError: true);
+      _showToast(e.toString().replaceAll('Exception: ', ''), isError: true);
     } finally {
       if (mounted) setState(() => _isActionProcessing = false);
     }
@@ -1374,7 +1344,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      _showToast('Tidak dapat membuka WhatsApp untuk nomor $phone', isError: true);
+      _showToast('Tidak dapat membuka WhatsApp untuk nomor $phone',
+          isError: true);
     }
   }
 
@@ -1401,7 +1372,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     final logs = (detail['logs'] as List? ?? []);
 
     final bool canApprove = authInfo['can_approve_or_reject'] == true;
-    final String? restrictionNotice = authInfo['restriction_notice']?.toString();
+    final String? restrictionNotice =
+        authInfo['restriction_notice']?.toString();
 
     final status = leave['status']?.toString() ?? 'pending';
     final isPending = status == 'pending';
@@ -1415,7 +1387,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
     final parentPhoneClean = student['parent_phone_clean']?.toString();
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1445,11 +1418,13 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                     children: [
                       const Text(
                         'Detail Permohonan Izin',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w900),
                       ),
                       Text(
                         '$studentName • Kelas $className',
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                        style: const TextStyle(
+                            fontSize: 11.5, color: Color(0xFF64748B)),
                       ),
                     ],
                   ),
@@ -1483,7 +1458,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 18),
+                          const Icon(Icons.info_outline_rounded,
+                              color: Color(0xFF2563EB), size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1513,7 +1489,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                     child: Column(
                       children: [
                         _buildDetailRow('Nama Siswa', studentName),
-                        _buildDetailRow('NISN / NIS', '$nisn / ${student['nis'] ?? '-'}'),
+                        _buildDetailRow(
+                            'NISN / NIS', '$nisn / ${student['nis'] ?? '-'}'),
                         _buildDetailRow('Kelas', 'Kelas $className'),
                         _buildDetailRow('Orang Tua / Wali', parentName),
                         if (parentPhone != null && parentPhone.isNotEmpty) ...[
@@ -1523,29 +1500,41 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                             children: [
                               const Text(
                                 'No. WhatsApp Ortu',
-                                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                style: TextStyle(
+                                    fontSize: 12, color: Color(0xFF64748B)),
                               ),
                               if (parentPhoneClean != null)
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF22C55E),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8)),
                                   ),
-                                  onPressed: () => _launchWhatsApp(parentPhoneClean),
-                                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 12),
+                                  onPressed: () =>
+                                      _launchWhatsApp(parentPhoneClean),
+                                  icon: const Icon(
+                                      Icons.chat_bubble_outline_rounded,
+                                      size: 12),
                                   label: Text(
                                     parentPhone,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 )
                               else
                                 Text(
                                   parentPhone,
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
                                 ),
                             ],
                           ),
@@ -1571,16 +1560,25 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                         _buildDetailRow(
                           'Jenis Permohonan',
                           isSakit ? 'Sakit' : 'Izin',
-                          valueColor: isSakit ? const Color(0xFFE11D48) : const Color(0xFF16A34A),
+                          valueColor: isSakit
+                              ? const Color(0xFFE11D48)
+                              : const Color(0xFF16A34A),
                         ),
-                        _buildDetailRow('Tanggal Mulai', leave['start_date_formatted']?.toString() ?? '-'),
-                        _buildDetailRow('Tanggal Selesai', leave['end_date_formatted']?.toString() ?? '-'),
-                        _buildDetailRow('Durasi Hari', leave['duration_label']?.toString() ?? '-'),
-                        _buildDetailRow('Status Saat Ini', leave['status_label']?.toString() ?? '-'),
+                        _buildDetailRow('Tanggal Mulai',
+                            leave['start_date_formatted']?.toString() ?? '-'),
+                        _buildDetailRow('Tanggal Selesai',
+                            leave['end_date_formatted']?.toString() ?? '-'),
+                        _buildDetailRow('Durasi Hari',
+                            leave['duration_label']?.toString() ?? '-'),
+                        _buildDetailRow('Status Saat Ini',
+                            leave['status_label']?.toString() ?? '-'),
                         const SizedBox(height: 8),
                         const Text(
                           'Alasan / Keterangan:',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                          style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF475569)),
                         ),
                         const SizedBox(height: 4),
                         Container(
@@ -1593,7 +1591,10 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                           ),
                           child: Text(
                             leave['reason']?.toString() ?? '-',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF1E293B), height: 1.35),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF1E293B),
+                                height: 1.35),
                           ),
                         ),
                       ],
@@ -1603,7 +1604,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                   const SizedBox(height: 14),
 
                   // CARD 3: BERKAS LAMPIRAN SURAT DOKTER / ORTU
-                  _buildSectionHeader('Berkas Lampiran Bukti (${attachments.length})'),
+                  _buildSectionHeader(
+                      'Berkas Lampiran Bukti (${attachments.length})'),
                   if (attachments.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -1615,7 +1617,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                       child: const Center(
                         child: Text(
                           'Tidak ada lampiran foto/berkas yang diunggah.',
-                          style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                          style: TextStyle(
+                              fontSize: 11.5, color: Color(0xFF64748B)),
                         ),
                       ),
                     )
@@ -1623,7 +1626,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
@@ -1637,7 +1641,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                         final name = att['name']?.toString() ?? 'Lampiran';
 
                         return GestureDetector(
-                          onTap: () => _openAttachmentViewer(url, isImg, name),
+                          onTap: () =>
+                              _openAttachmentViewer(url, isImg, name),
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
@@ -1653,8 +1658,11 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                                         Image.network(
                                           url,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const Center(
-                                            child: Icon(Icons.broken_image_rounded, color: Color(0xFF94A3B8)),
+                                          errorBuilder: (_, __, ___) =>
+                                              const Center(
+                                            child: Icon(
+                                                Icons.broken_image_rounded,
+                                                color: Color(0xFF94A3B8)),
                                           ),
                                         ),
                                         Positioned(
@@ -1662,13 +1670,17 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                                           left: 0,
                                           right: 0,
                                           child: Container(
-                                            color: Colors.black.withOpacity(0.6),
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                            color:
+                                                Colors.black.withOpacity(0.6),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 4),
                                             child: Text(
                                               name,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(color: Colors.white, fontSize: 10),
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10),
                                             ),
                                           ),
                                         ),
@@ -1676,17 +1688,25 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                                     )
                                   : Center(
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFDC2626), size: 32),
+                                          const Icon(
+                                              Icons.picture_as_pdf_rounded,
+                                              color: Color(0xFFDC2626),
+                                              size: 32),
                                           const SizedBox(height: 6),
                                           Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                                            padding: const EdgeInsets
+                                                .symmetric(horizontal: 6),
                                             child: Text(
                                               name,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                                              style: const TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight:
+                                                      FontWeight.bold),
                                             ),
                                           ),
                                         ],
@@ -1717,23 +1737,35 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                const Text('• ',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '${lg['action_label']} oleh ${lg['user_name']}',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                      if (lg['reason'] != null && lg['reason'].toString().isNotEmpty)
+                                      if (lg['reason'] != null &&
+                                          lg['reason'].toString().isNotEmpty)
                                         Text(
                                           lg['reason'].toString(),
-                                          style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF475569)),
                                         ),
                                       Text(
-                                        lg['created_at_formatted']?.toString() ?? '',
-                                        style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                                        lg['created_at_formatted']
+                                                ?.toString() ??
+                                            '',
+                                        style: const TextStyle(
+                                            fontSize: 10,
+                                            color: Color(0xFF94A3B8)),
                                       ),
                                     ],
                                   ),
@@ -1759,7 +1791,8 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
               color: Colors.white,
               child: _isActionProcessing
                   ? const Center(
-                      child: SpinKitThreeBounce(color: AppColors.primary, size: 24),
+                      child: SpinKitThreeBounce(
+                          color: AppColors.primary, size: 24),
                     )
                   : Row(
                       children: [
@@ -1769,13 +1802,19 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                             child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFFDC2626),
-                                side: const BorderSide(color: Color(0xFFDC2626)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                side: const BorderSide(
+                                    color: Color(0xFFDC2626)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: _handleReject,
-                              icon: const Icon(Icons.cancel_outlined, size: 16),
-                              label: const Text('Tolak', style: TextStyle(fontWeight: FontWeight.bold)),
+                              icon: const Icon(Icons.cancel_outlined,
+                                  size: 16),
+                              label: const Text('Tolak',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -1786,14 +1825,18 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF059669),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: _handleApprove,
-                              icon: const Icon(Icons.check_circle_rounded, size: 16),
+                              icon: const Icon(Icons.check_circle_rounded,
+                                  size: 16),
                               label: const Text(
                                 'Setujui Permohonan',
-                                style: TextStyle(fontWeight: FontWeight.w900),
+                                style:
+                                    TextStyle(fontWeight: FontWeight.w900),
                               ),
                             ),
                           ),
@@ -1803,15 +1846,20 @@ class _DetailIjinModalState extends State<_DetailIjinModal> {
                             child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFF475569),
-                                side: const BorderSide(color: Color(0xFF94A3B8)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                side: const BorderSide(
+                                    color: Color(0xFF94A3B8)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: _handleReset,
-                              icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                              icon: const Icon(Icons.restart_alt_rounded,
+                                  size: 16),
                               label: const Text(
                                 'Kembalikan ke Status Menunggu (Reset)',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style:
+                                    TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
                           ),
