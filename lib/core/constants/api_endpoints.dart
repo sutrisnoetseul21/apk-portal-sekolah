@@ -43,5 +43,32 @@ class ApiEndpoints {
       '/guru/ijin-kehadiran/$id/approve';
   static String guruIjinReject(String id) => '/guru/ijin-kehadiran/$id/reject';
   static String guruIjinReset(String id) => '/guru/ijin-kehadiran/$id/reset';
+
+  // Menu 5: Guru Wali (SI-WALI) (/portal-guru/guru-wali/*)
+  static const String guruWaliDashboard = '/guru/guru-wali/dashboard';
+  static const String guruWaliJurnalList = '/guru/guru-wali/jurnal';
+  static const String guruWaliJurnalIndividual =
+      '/guru/guru-wali/jurnal/individual';
+  static const String guruWaliJurnalKlasikal = '/guru/guru-wali/jurnal/klasikal';
+  static String guruWaliJurnalDetail(String id) => '/guru/guru-wali/jurnal/$id';
+  static String guruWaliJurnalRujukBk(String id) =>
+      '/guru/guru-wali/jurnal/$id/rujuk-bk';
+
+  static const String guruWaliKonsultasiList = '/guru/guru-wali/konsultasi';
+  static String guruWaliKonsultasiDetail(String id) =>
+      '/guru/guru-wali/konsultasi/$id';
+  static String guruWaliKonsultasiPesan(String id) =>
+      '/guru/guru-wali/konsultasi/$id/pesan';
+  static String guruWaliKonsultasiJadwalkan(String id) =>
+      '/guru/guru-wali/konsultasi/$id/jadwalkan';
+  static String guruWaliKonsultasiBalas(String id) =>
+      '/guru/guru-wali/konsultasi/$id/balas';
+  static String guruWaliKonsultasiTolak(String id) =>
+      '/guru/guru-wali/konsultasi/$id/tolak';
+  static String guruWaliKonsultasiKonversiJurnal(String id) =>
+      '/guru/guru-wali/konsultasi/$id/konversi-jurnal';
+
+  static const String guruWaliPemantauan = '/guru/guru-wali/pemantauan';
+  static const String guruWaliCetakPdf = '/guru/guru-wali/cetak/pdf';
 }
 
