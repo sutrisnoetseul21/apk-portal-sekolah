@@ -1,3 +1,13 @@
+/// Helper fungsi untuk parsing nilai integer yang tahan banting (aman dari null, num, double, maupun string)
+int _parseInt(dynamic value, [int defaultValue = 0]) {
+  if (value == null) return defaultValue;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? defaultValue;
+  }
+  return defaultValue;
+}
+
 /// Model data permohonan ijin siswa (Menu 4)
 class LeaveRequestItemModel {
   final String id;
@@ -6,7 +16,7 @@ class LeaveRequestItemModel {
   final String studentNisn;
   final String studentGender;
   final String? studentAvatarUrl;
-  final int? classId;
+  final String? classId;
   final String className;
   final String type;
   final String typeLabel;
@@ -87,7 +97,7 @@ class LeaveRequestItemModel {
       studentNisn: json['student_nisn']?.toString() ?? '-',
       studentGender: json['student_gender']?.toString() ?? 'L',
       studentAvatarUrl: json['student_avatar_url']?.toString(),
-      classId: (json['class_id'] as num?)?.toInt(),
+      classId: json['class_id']?.toString(),
       className: json['class_name']?.toString() ?? '-',
       type: json['type']?.toString() ?? 'ijin',
       typeLabel: json['type_label']?.toString() ?? 'Izin',
@@ -95,7 +105,7 @@ class LeaveRequestItemModel {
       startDateFormatted: json['start_date_formatted']?.toString() ?? '-',
       endDate: json['end_date']?.toString(),
       endDateFormatted: json['end_date_formatted']?.toString() ?? '-',
-      durationDays: (json['duration_days'] as num?)?.toInt() ?? 1,
+      durationDays: _parseInt(json['duration_days'], 1),
       durationLabel: json['duration_label']?.toString() ?? '1 Hari',
       reason: json['reason']?.toString() ?? '-',
       status: json['status']?.toString() ?? 'pending',
@@ -104,7 +114,7 @@ class LeaveRequestItemModel {
       approvedAt: json['approved_at']?.toString(),
       approvedAtFormatted: json['approved_at_formatted']?.toString(),
       createdAtFormatted: json['created_at_formatted']?.toString(),
-      attachmentsCount: (json['attachments_count'] as num?)?.toInt() ?? 0,
+      attachmentsCount: _parseInt(json['attachments_count'], 0),
       thumbnailUrl: json['thumbnail_url']?.toString(),
       attachments: (json['attachments'] as List? ?? [])
           .map((a) => LeaveAttachmentModel.fromJson(Map<String, dynamic>.from(a as Map)))
@@ -134,7 +144,7 @@ class LeaveAttachmentModel {
 
   factory LeaveAttachmentModel.fromJson(Map<String, dynamic> json) {
     return LeaveAttachmentModel(
-      index: (json['index'] as num?)?.toInt() ?? 0,
+      index: _parseInt(json['index'], 0),
       name: json['name']?.toString() ?? 'Lampiran',
       url: json['url']?.toString() ?? '',
       mediatype: json['mediatype']?.toString() ?? 'document',
@@ -193,10 +203,10 @@ class LeaveRequestStatsModel {
 
   factory LeaveRequestStatsModel.fromJson(Map<String, dynamic> json) {
     return LeaveRequestStatsModel(
-      pending: (json['pending'] as num?)?.toInt() ?? 0,
-      approved: (json['approved'] as num?)?.toInt() ?? 0,
-      rejected: (json['rejected'] as num?)?.toInt() ?? 0,
-      total: (json['total'] as num?)?.toInt() ?? 0,
+      pending: _parseInt(json['pending'], 0),
+      approved: _parseInt(json['approved'], 0),
+      rejected: _parseInt(json['rejected'], 0),
+      total: _parseInt(json['total'], 0),
     );
   }
 }
@@ -235,10 +245,10 @@ class LeaveRequestListResponse {
       requests: (json['requests'] as List? ?? [])
           .map((item) => LeaveRequestItemModel.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList(),
-      currentPage: (pagination['current_page'] as num?)?.toInt() ?? 1,
-      lastPage: (pagination['last_page'] as num?)?.toInt() ?? 1,
-      perPage: (pagination['per_page'] as num?)?.toInt() ?? 15,
-      total: (pagination['total'] as num?)?.toInt() ?? 0,
+      currentPage: _parseInt(pagination['current_page'], 1),
+      lastPage: _parseInt(pagination['last_page'], 1),
+      perPage: _parseInt(pagination['per_page'], 15),
+      total: _parseInt(pagination['total'], 0),
       todayStats: LeaveRequestStatsModel.fromJson(stats),
       accessibleClasses: List<Map<String, dynamic>>.from(
         (json['accessible_classes'] as List? ?? []).map((e) => Map<String, dynamic>.from(e as Map)),

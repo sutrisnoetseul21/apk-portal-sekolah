@@ -568,7 +568,11 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
               Expanded(
                 child: hasMultipleClasses
                     ? DropdownButtonFormField<String>(
-                        value: _selectedClassId,
+                        value: (_selectedClassId != null &&
+                                _accessibleClasses.any((c) =>
+                                    c['id']?.toString() == _selectedClassId))
+                            ? _selectedClassId
+                            : '',
                         isExpanded: true,
                         decoration: InputDecoration(
                           labelText: 'PILIH KELAS',
@@ -589,7 +593,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                           ),
                           ..._accessibleClasses.map(
                             (c) => DropdownMenuItem<String>(
-                              value: c['id']?.toString(),
+                              value: c['id']?.toString() ?? '',
                               child: Text(
                                 'Kelas ${c['name'] ?? ''} (${c['access_label'] ?? 'Kelas'})',
                                 style: const TextStyle(fontSize: 12),
@@ -599,7 +603,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                           ),
                         ],
                         onChanged: (val) {
-                          setState(() => _selectedClassId = val);
+                          setState(() => _selectedClassId =
+                              (val == null || val.isEmpty) ? null : val);
                           _loadData(page: 1);
                         },
                       )
@@ -629,7 +634,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
                                   ),
                                   Text(
                                     _accessibleClasses.isNotEmpty
-                                        ? 'Kelas ${_accessibleClasses.first['name'] ?? '-'}'
+                                        ? 'Kelas ${_accessibleClasses.first['name'] ?? '-'} (${_accessibleClasses.first['access_label'] ?? 'Kelas'})'
                                         : 'Belum Ada Kelas',
                                     style: const TextStyle(
                                         fontSize: 12,
