@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/storage/session_storage.dart';
 import '../../auth/screens/login_screen.dart';
 import 'jurnal_mengajar_screen.dart';
+import 'ijin_kehadiran_screen.dart';
 import 'presensi_kelas_screen.dart';
 import 'presensi_sholat_dhuhur_screen.dart';
 
@@ -137,6 +138,21 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .push(
           MaterialPageRoute(
             builder: (_) => JurnalMengajarScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openIjinMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => IjinKehadiranScreen(
               teacherName: _resolvedTeacherName ?? widget.teacherName,
               token: widget.token,
               identifier: widget.identifier,
@@ -311,6 +327,85 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 ),
               ),
 
+              // IN-APP NOTIFICATION BANNER (Jika ada permohonan pending baru)
+              if (_pendingLeaveCount > 0) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF1F2), Color(0xFFFFE4E6)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFDA4AF)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE11D48).withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE11D48),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Permohonan Izin Menunggu',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF9F1239),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Ada $_pendingLeaveCount permohonan siswa yang membutuhkan persetujuan Anda.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF881337),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE11D48),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: _openIjinMenu,
+                        child: const Text(
+                          'Tinjau',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 20),
 
               // =========================================================
@@ -394,7 +489,7 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 onTap: _openJurnalMengajarMenu,
               ),
 
-              // MENU 4: Persetujuan Ijin
+              // MENU 4: Persetujuan Ijin (Aktif Penuh)
               _PortalMenuBoxCard(
                 number: 4,
                 title: 'Persetujuan Ijin',
@@ -406,7 +501,8 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 icon: Icons.assignment_turned_in_outlined,
                 accentColor: const Color(0xFFE11D48),
                 primaryActionLabel: 'Buka Persetujuan',
-                onTap: () => _showStepNotice('Persetujuan Ijin', 4),
+                isReady: true,
+                onTap: _openIjinMenu,
               ),
 
               // MENU 5: Guru Wali (SI-WALI)
