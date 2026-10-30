@@ -11,6 +11,7 @@ import 'presensi_sholat_dhuhur_screen.dart';
 import 'guru_wali_screen.dart';
 import 'data_siswa_screen.dart';
 import 'spikap_screen.dart';
+import 'perpustakaan_screen.dart';
 import 'widgets/dialog_akses_spikap_ditolak.dart';
 
 /// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
@@ -218,6 +219,21 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .push(
           MaterialPageRoute(
             builder: (_) => SpikapScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openPerpustakaanMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => PerpustakaanScreen(
               teacherName: _resolvedTeacherName ?? widget.teacherName,
               token: widget.token,
               identifier: widget.identifier,
@@ -705,12 +721,15 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 number: 8,
                 title: 'Perpustakaan',
                 description:
-                    'Cari koleksi katalog perpustakaan sekolah dan pantau riwayat buku yang sedang Anda pinjam.',
-                badgeText: '$_activeBooksCount Dipinjam',
+                    'Cari koleksi katalog perpustakaan sekolah, pantau pinjaman buku aktif, riwayat kunjungan, dan peminjaman siswa kelas binaan.',
+                badgeText: _activeBooksCount > 0
+                    ? '$_activeBooksCount Dipinjam'
+                    : 'Katalog & Koleksi',
                 icon: Icons.local_library_outlined,
                 accentColor: const Color(0xFFD97706),
                 primaryActionLabel: 'Buka Perpustakaan',
-                onTap: () => _showStepNotice('Perpustakaan', 8),
+                isReady: true,
+                onTap: _openPerpustakaanMenu,
               ),
 
               // MENU 9: Profil Saya
