@@ -234,3 +234,4 @@ class GuruAkademikData {
     'tahun_ajaran': tahunAjaran,
   };
 }
+
