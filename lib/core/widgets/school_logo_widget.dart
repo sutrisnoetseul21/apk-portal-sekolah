@@ -114,3 +114,4 @@ class SchoolLogoWidget extends StatelessWidget {
     );
   }
 }
+

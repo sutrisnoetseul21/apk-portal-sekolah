@@ -112,11 +112,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       final targetSchool = _schoolName.isNotEmpty
           ? _schoolName
           : savedSession.schoolName;
+      final logoUrl = _logoUrl ?? savedSession.schoolLogoUrl;
+      final logoBase64 = _logoBase64 ?? savedSession.schoolLogoBase64;
+
       final Widget targetDashboard = savedSession.role == 'siswa'
           ? DashboardSiswaScreen(
               studentName: savedSession.name,
               identifier: savedSession.identifier,
               schoolName: targetSchool,
+              token: savedSession.token,
+              schoolLogoUrl: logoUrl,
+              schoolLogoBase64: logoBase64,
             )
           : DashboardGuruScreen(
               teacherName: savedSession.name,
@@ -124,6 +130,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               roleLabel: savedSession.roleLabel,
               schoolName: targetSchool,
               token: savedSession.token,
+              schoolLogoUrl: logoUrl,
+              schoolLogoBase64: logoBase64,
             );
 
       Navigator.of(context).pushReplacement(

@@ -238,6 +238,9 @@ class _LoginScreenState extends State<LoginScreen> {
             studentName: name,
             identifier: identifier,
             schoolName: _schoolName,
+            token: token,
+            schoolLogoUrl: _logoUrl,
+            schoolLogoBase64: _logoBase64,
           ),
         ),
       );
@@ -250,6 +253,8 @@ class _LoginScreenState extends State<LoginScreen> {
             roleLabel: roleLabel,
             schoolName: _schoolName,
             token: token,
+            schoolLogoUrl: _logoUrl,
+            schoolLogoBase64: _logoBase64,
           ),
         ),
       );
