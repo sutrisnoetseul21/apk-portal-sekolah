@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/constants/app_colors.dart';
 import '../models/guru_wali_dashboard_model.dart';
 import '../models/jurnal_guru_wali_model.dart';
 import '../models/konsultasi_guru_wali_model.dart';
-import '../models/pemantauan_bulanan_model.dart';
 import '../services/guru_wali_service.dart';
+import 'widgets/guru_wali/modal_jurnal_individu.dart';
+import 'widgets/guru_wali/modal_jurnal_klasikal.dart';
+import 'widgets/guru_wali/modal_pemantauan_sheet.dart';
+import 'widgets/guru_wali/dialog_cetak_pdf.dart';
 
 /// Halaman Utama Menu 5: Guru Wali (SI-WALI)
 /// Mengimplementasikan Single Command Center (Layar Utama Terpadu)
@@ -150,49 +151,65 @@ class _GuruWaliScreenState extends State<GuruWaliScreen> {
   // =========================================================================
 
   void _onTambahKlasikal() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Form Bimbingan Klasikal akan dibuka pada Tahap 5.'),
-        behavior: SnackBarBehavior.floating,
+    final list = _dashboardData?.siswaAktif ?? [];
+    if (list.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada siswa aktif dalam kelompok dampingan ini.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ModalJurnalKlasikal(
+        siswaList: list,
+        service: _service,
       ),
-    );
+    ).then((res) {
+      if (res == true) {
+        _loadDashboard();
+      }
+    });
   }
 
   void _onBukaPemantauan() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Matriks Pemantauan Progres akan dibuka pada Tahap 5.'),
-        behavior: SnackBarBehavior.floating,
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ModalPemantauanSheet(
+        service: _service,
       ),
     );
   }
 
-  void _onCetakPdf() async {
-    final url = _service.getPdfDownloadUrl(type: 'rekap', periode: 'tahunan');
-    final uri = Uri.parse(url);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Mengunduh laporan PDF: $url'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    } catch (_) {}
+  void _onCetakPdf() {
+    showDialog(
+      context: context,
+      builder: (_) => DialogCetakPdf(
+        service: _service,
+      ),
+    );
   }
 
   void _onTambahJurnalIndividu(SiswaAsuhModel siswa) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Catat Jurnal Individu untuk ${siswa.name} (Tahap 5).'),
-        behavior: SnackBarBehavior.floating,
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ModalJurnalIndividu(
+        siswa: siswa,
+        service: _service,
       ),
-    );
+    ).then((res) {
+      if (res == true) {
+        _loadDashboard();
+      }
+    });
   }
 
   void _onLihatRiwayatSiswa(SiswaAsuhModel siswa) {
