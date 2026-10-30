@@ -12,6 +12,8 @@ import 'guru_wali_screen.dart';
 import 'data_siswa_screen.dart';
 import 'spikap_screen.dart';
 import 'perpustakaan_screen.dart';
+import 'profil_guru_screen.dart';
+import '../models/guru_profil_model.dart';
 import 'widgets/dialog_akses_spikap_ditolak.dart';
 
 /// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
@@ -244,6 +246,29 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .then((_) => _fetchSummary());
   }
 
+  void _openProfilMenu({int initialTab = 0}) {
+    Navigator.of(context)
+        .push<GuruProfilData?>(
+          MaterialPageRoute(
+            builder: (_) => ProfilGuruScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+              initialTab: initialTab,
+            ),
+          ),
+        )
+        .then((updated) {
+          if (updated != null && mounted) {
+            setState(() {
+              _resolvedTeacherName = updated.displayName;
+            });
+          }
+          _fetchSummary();
+        });
+  }
+
   void _showStepNotice(String menuTitle, int stepNumber) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -282,6 +307,11 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Segarkan',
             onPressed: _fetchSummary,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded),
+            tooltip: 'Profil Saya',
+            onPressed: () => _openProfilMenu(),
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -737,12 +767,13 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 number: 9,
                 title: 'Profil Saya',
                 description:
-                    'Lihat informasi NIP, penugasan akademik, perbarui foto, email, dan ganti kata sandi akun.',
+                    'Lihat informasi NIP, penugasan akademik, perbarui foto, email, tautan microsite, dan ganti kata sandi akun.',
                 badgeText: 'Biodata & Akun',
                 icon: Icons.person_outline_rounded,
                 accentColor: const Color(0xFF0284C7),
                 primaryActionLabel: 'Lihat Profil',
-                onTap: () => _showStepNotice('Profil Saya', 9),
+                isReady: true,
+                onTap: _openProfilMenu,
               ),
 
               const SizedBox(height: 16),
