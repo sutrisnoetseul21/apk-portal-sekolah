@@ -40,6 +40,12 @@ class _SpikapScreenState extends State<SpikapScreen> {
       const SpikapKpiStats(total: 0, darurat: 0, aktif: 0, selesai: 0);
   SpikapAccessInfo? _accessInfo;
 
+  // Pagination State
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = false;
+  bool _isLoadingMore = false;
+
   // Filter & Search State
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
@@ -54,6 +60,7 @@ class _SpikapScreenState extends State<SpikapScreen> {
       token: widget.token,
       identifier: widget.identifier,
     );
+    _scrollController.addListener(_onScroll);
     _loadInbox();
   }
 
@@ -61,13 +68,24 @@ class _SpikapScreenState extends State<SpikapScreen> {
   void dispose() {
     _searchController.dispose();
     _debounceTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMore) {
+      _loadMore();
+    }
   }
 
   Future<void> _loadInbox() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _currentPage = 1;
     });
 
     try {
@@ -76,6 +94,7 @@ class _SpikapScreenState extends State<SpikapScreen> {
         status: _selectedStatus.isNotEmpty ? _selectedStatus : null,
         sifat: _selectedSifat.isNotEmpty ? _selectedSifat : null,
         jenis: _selectedJenis.isNotEmpty ? _selectedJenis : null,
+        page: 1,
       );
 
       if (mounted) {
@@ -83,6 +102,7 @@ class _SpikapScreenState extends State<SpikapScreen> {
           _reports = result.reports;
           _stats = result.stats;
           _accessInfo = result.access;
+          _hasMore = result.hasMore;
           _isLoading = false;
         });
       }
@@ -91,6 +111,40 @@ class _SpikapScreenState extends State<SpikapScreen> {
         setState(() {
           _errorMessage = e.toString().replaceAll('Exception: ', '');
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final nextPage = _currentPage + 1;
+      final result = await _spikapService.getInbox(
+        search: _searchController.text.trim(),
+        status: _selectedStatus.isNotEmpty ? _selectedStatus : null,
+        sifat: _selectedSifat.isNotEmpty ? _selectedSifat : null,
+        jenis: _selectedJenis.isNotEmpty ? _selectedJenis : null,
+        page: nextPage,
+      );
+
+      if (mounted) {
+        setState(() {
+          _reports.addAll(result.reports);
+          _currentPage = nextPage;
+          _hasMore = result.hasMore;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
         });
       }
     }
@@ -258,6 +312,7 @@ class _SpikapScreenState extends State<SpikapScreen> {
     return RefreshIndicator(
       onRefresh: _loadInbox,
       child: ListView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         children: [
           // 1. Ringkasan Kartu Metrik KPI
@@ -310,6 +365,18 @@ class _SpikapScreenState extends State<SpikapScreen> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildTicketCard(item),
                 )),
+
+          if (_isLoadingMore)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
           const SizedBox(height: 20),
         ],
       ),
@@ -331,6 +398,7 @@ class _SpikapScreenState extends State<SpikapScreen> {
           icon: Icons.shield_outlined,
           color: const Color(0xFF475569),
           bgColor: const Color(0xFFF1F5F9),
+          onTap: _resetFilters,
         ),
         _buildKpiCard(
           title: 'Laporan Darurat',
@@ -339,6 +407,12 @@ class _SpikapScreenState extends State<SpikapScreen> {
           color: const Color(0xFFDC2626),
           bgColor: const Color(0xFFFEE2E2),
           isUrgent: _stats.darurat > 0,
+          onTap: () {
+            setState(() {
+              _selectedSifat = _selectedSifat == 'darurat' ? '' : 'darurat';
+            });
+            _loadInbox();
+          },
         ),
         _buildKpiCard(
           title: 'Perlu Penanganan',
@@ -346,6 +420,13 @@ class _SpikapScreenState extends State<SpikapScreen> {
           icon: Icons.hourglass_top_rounded,
           color: const Color(0xFFD97706),
           bgColor: const Color(0xFFFEF3C7),
+          onTap: () {
+            setState(() {
+              _selectedStatus =
+                  _selectedStatus == 'dalam_investigasi' ? '' : 'dalam_investigasi';
+            });
+            _loadInbox();
+          },
         ),
         _buildKpiCard(
           title: 'Tuntas / Selesai',
@@ -353,6 +434,13 @@ class _SpikapScreenState extends State<SpikapScreen> {
           icon: Icons.check_circle_outline_rounded,
           color: const Color(0xFF059669),
           bgColor: const Color(0xFFD1FAE5),
+          onTap: () {
+            setState(() {
+              _selectedStatus =
+                  _selectedStatus == 'selesai' ? '' : 'selesai';
+            });
+            _loadInbox();
+          },
         ),
       ],
     );
@@ -365,60 +453,65 @@ class _SpikapScreenState extends State<SpikapScreen> {
     required Color color,
     required Color bgColor,
     bool isUrgent = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isUrgent ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
-          width: isUrgent ? 1.5 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isUrgent
-                ? const Color(0xFFDC2626).withOpacity(0.08)
-                : Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isUrgent ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
+            width: isUrgent ? 1.5 : 1,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF64748B),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 14, color: color),
-              ),
-            ],
-          ),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+          boxShadow: [
+            BoxShadow(
+              color: isUrgent
+                  ? const Color(0xFFDC2626).withOpacity(0.08)
+                  : Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 14, color: color),
+                ),
+              ],
+            ),
+            Text(
+              value,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -480,22 +573,25 @@ class _SpikapScreenState extends State<SpikapScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Scrollable Filter Chips
+          // 1. Status & Urgensi Filter Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _buildFilterChip(
-                  label: 'Semua Status',
-                  isSelected: _selectedStatus.isEmpty,
+                  label: 'Semua (${_stats.total})',
+                  isSelected: _selectedStatus.isEmpty && _selectedSifat.isEmpty,
                   onSelected: () {
-                    setState(() => _selectedStatus = '');
+                    setState(() {
+                      _selectedStatus = '';
+                      _selectedSifat = '';
+                    });
                     _loadInbox();
                   },
                 ),
                 const SizedBox(width: 6),
                 _buildFilterChip(
-                  label: '🚨 Darurat Saja',
+                  label: '🚨 Darurat (${_stats.darurat})',
                   isSelected: _selectedSifat == 'darurat',
                   activeColor: const Color(0xFFDC2626),
                   onSelected: () {
@@ -520,7 +616,7 @@ class _SpikapScreenState extends State<SpikapScreen> {
                 ),
                 const SizedBox(width: 6),
                 _buildFilterChip(
-                  label: 'Investigasi',
+                  label: 'Investigasi (${_stats.aktif})',
                   isSelected: _selectedStatus == 'dalam_investigasi',
                   onSelected: () {
                     setState(() {
@@ -533,13 +629,97 @@ class _SpikapScreenState extends State<SpikapScreen> {
                 ),
                 const SizedBox(width: 6),
                 _buildFilterChip(
-                  label: 'Selesai',
+                  label: 'Selesai (${_stats.selesai})',
                   isSelected: _selectedStatus == 'selesai',
                   activeColor: const Color(0xFF059669),
                   onSelected: () {
                     setState(() {
                       _selectedStatus =
                           _selectedStatus == 'selesai' ? '' : 'selesai';
+                    });
+                    _loadInbox();
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // 2. Kategori Jenis Perundungan Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip(
+                  label: 'Semua Kategori',
+                  isSelected: _selectedJenis.isEmpty,
+                  onSelected: () {
+                    setState(() => _selectedJenis = '');
+                    _loadInbox();
+                  },
+                ),
+                const SizedBox(width: 6),
+                _buildFilterChip(
+                  label: 'Kekerasan Fisik',
+                  isSelected: _selectedJenis == 'fisik',
+                  activeColor: const Color(0xFFDC2626),
+                  onSelected: () {
+                    setState(() {
+                      _selectedJenis =
+                          _selectedJenis == 'fisik' ? '' : 'fisik';
+                    });
+                    _loadInbox();
+                  },
+                ),
+                const SizedBox(width: 6),
+                _buildFilterChip(
+                  label: 'Verbal',
+                  isSelected: _selectedJenis == 'verbal',
+                  activeColor: const Color(0xFFD97706),
+                  onSelected: () {
+                    setState(() {
+                      _selectedJenis =
+                          _selectedJenis == 'verbal' ? '' : 'verbal';
+                    });
+                    _loadInbox();
+                  },
+                ),
+                const SizedBox(width: 6),
+                _buildFilterChip(
+                  label: 'Sosial / Relasional',
+                  isSelected: _selectedJenis == 'sosial',
+                  activeColor: const Color(0xFF2563EB),
+                  onSelected: () {
+                    setState(() {
+                      _selectedJenis =
+                          _selectedJenis == 'sosial' ? '' : 'sosial';
+                    });
+                    _loadInbox();
+                  },
+                ),
+                const SizedBox(width: 6),
+                _buildFilterChip(
+                  label: 'Siber / Digital',
+                  isSelected: _selectedJenis == 'digital',
+                  activeColor: const Color(0xFF7C3AED),
+                  onSelected: () {
+                    setState(() {
+                      _selectedJenis =
+                          _selectedJenis == 'digital' ? '' : 'digital';
+                    });
+                    _loadInbox();
+                  },
+                ),
+                const SizedBox(width: 6),
+                _buildFilterChip(
+                  label: 'Lainnya',
+                  isSelected: _selectedJenis == 'lainnya',
+                  activeColor: const Color(0xFF64748B),
+                  onSelected: () {
+                    setState(() {
+                      _selectedJenis =
+                          _selectedJenis == 'lainnya' ? '' : 'lainnya';
                     });
                     _loadInbox();
                   },
@@ -934,3 +1114,4 @@ class _SpikapScreenState extends State<SpikapScreen> {
     );
   }
 }
+
