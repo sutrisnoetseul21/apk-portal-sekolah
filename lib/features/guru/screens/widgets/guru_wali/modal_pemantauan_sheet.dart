@@ -390,7 +390,7 @@ class _ModalPemantauanSheetState extends State<ModalPemantauanSheet> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: siswa.monthlyStatus.map((m) {
-                final hasSession = m.hasBimbingan;
+                final hasSession = m.isDidampingi;
                 return Container(
                   margin: const EdgeInsets.only(right: 6),
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),

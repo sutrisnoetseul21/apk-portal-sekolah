@@ -137,11 +137,10 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
       if (_rujukBk && createdId != null) {
         try {
           await widget.service.rujukBk(
-            id: createdId,
+            jurnalId: createdId,
             alasanRujukan: _alasanBkController.text.trim().isNotEmpty
-                ? _alasanBkController.text.trim()
-                : 'Eskalasi bimbingan guru wali untuk penanganan khusus.',
-            urgensi: _urgensiBk,
+                ? '(${_urgensiBk.toUpperCase()}) ${_alasanBkController.text.trim()}'
+                : '(${_urgensiBk.toUpperCase()}) Eskalasi bimbingan guru wali untuk penanganan khusus.',
           );
         } catch (_) {}
       }
