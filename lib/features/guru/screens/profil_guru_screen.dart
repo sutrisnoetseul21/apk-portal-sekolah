@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/storage/session_storage.dart';
+import '../../auth/screens/login_screen.dart';
 import '../models/guru_profil_model.dart';
 import '../services/guru_profil_service.dart';
 
@@ -47,6 +49,18 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
   bool _isSavingContact = false;
   bool _isUploadingPhoto = false;
 
+  // Form Keamanan Sandi Controllers
+  final _passwordFormKey = GlobalKey<FormState>();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _newPasswordConfirmController =
+      TextEditingController();
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isUpdatingPassword = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +77,9 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
     _emailController.dispose();
     _noHpController.dispose();
     _micrositeController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _newPasswordConfirmController.dispose();
     super.dispose();
   }
 
@@ -618,6 +635,146 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
           ),
         );
       }
+    }
+  }
+
+  /// Memperbarui kata sandi akun pendidik
+  Future<void> _handleUpdatePassword() async {
+    if (!_passwordFormKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isUpdatingPassword = true;
+    });
+
+    try {
+      final currentPass = _currentPasswordController.text;
+      final newPass = _newPasswordController.text;
+      final confirmPass = _newPasswordConfirmController.text;
+
+      await _service.updatePassword(
+        currentPassword: currentPass,
+        newPassword: newPass,
+        newPasswordConfirmation: confirmPass,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isUpdatingPassword = false;
+          _currentPasswordController.clear();
+          _newPasswordController.clear();
+          _newPasswordConfirmController.clear();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF059669),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Kata sandi berhasil diperbarui!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUpdatingPassword = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    e.toString().replaceFirst('Exception: ', ''),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Menangani proses logout akun pendidik
+  Future<void> _handleLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        title: Text(
+          'Keluar dari Akun Guru?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari akun Portal Guru? Sesi login di perangkat ini akan diakhiri.',
+          style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Keluar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await SessionStorage.clearSession();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -1689,12 +1846,290 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
   }
 
   // =========================================================================
-  // TAB 2: PENUGASAN AKADEMIK (DISELESAIKAN PENUH DI TAHAP 5)
+  // TAB 2: PENUGASAN AKADEMIK RESMI PENDIDIK
   // =========================================================================
 
   Widget _buildTabAkademik(GuruProfilData data) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Card Notice Administrator
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFFD97706),
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Master Data Akademik Terpusat',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    const Text(
+                      'Penugasan Wali Kelas, Mata Pelajaran, dan NIP dikelola langsung oleh Administrator Kurikulum sekolah.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFB45309),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Card 1: Penugasan Wali Kelas
+        _buildAcademicCard(
+          icon: Icons.groups_rounded,
+          iconColor: const Color(0xFF059669),
+          title: 'Penugasan Wali Kelas',
+          badgeText: data.akademik.isWaliKelas ? 'AKTIF' : 'NON-WALI',
+          badgeBgColor: data.akademik.isWaliKelas
+              ? const Color(0xFFECFDF5)
+              : const Color(0xFFF1F5F9),
+          badgeTextColor: data.akademik.isWaliKelas
+              ? const Color(0xFF047857)
+              : const Color(0xFF64748B),
+          content: data.akademik.kelasWali.isNotEmpty
+              ? Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: data.akademik.kelasWali
+                      .map(
+                        (k) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 14,
+                                color: Color(0xFF059669),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Kelas $k',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF065F46),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                )
+              : const Text(
+                  'Tidak bertugas sebagai Wali Kelas pada tahun ajaran aktif ini.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+        ),
+
+        // Card 2: Akses Kelas Pantau BK (Jika ada)
+        if (data.akademik.kelasPantau.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _buildAcademicCard(
+            icon: Icons.visibility_rounded,
+            iconColor: const Color(0xFF2563EB),
+            title: 'Akses Kelas Pantau (BK)',
+            badgeText: '${data.akademik.kelasPantau.length} KELAS',
+            badgeBgColor: const Color(0xFFEFF6FF),
+            badgeTextColor: const Color(0xFF1D4ED8),
+            content: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: data.akademik.kelasPantau
+                  .map(
+                    (kp) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: Text(
+                        'Kelas $kp',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E40AF),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 14),
+
+        // Card 3: Mata Pelajaran yang Diampu
+        _buildAcademicCard(
+          icon: Icons.menu_book_rounded,
+          iconColor: const Color(0xFF7C3AED),
+          title: 'Mata Pelajaran yang Diampu',
+          badgeText: '${data.akademik.mapelDiampu.length} MAPEL',
+          badgeBgColor: const Color(0xFFF5F3FF),
+          badgeTextColor: const Color(0xFF6D28D9),
+          content: data.akademik.mapelDiampu.isNotEmpty
+              ? Column(
+                  children: data.akademik.mapelDiampu.map((m) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEDE9FE),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.bookmark_outline_rounded,
+                              size: 15,
+                              color: Color(0xFF7C3AED),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              m,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                )
+              : const Text(
+                  'Belum ada mata pelajaran terdaftar pada tahun ajaran ini.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+        ),
+
+        // Card 4: Jabatan & Tugas Tambahan (Jika ada)
+        if (data.akademik.jabatanAktif.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _buildAcademicCard(
+            icon: Icons.workspace_premium_rounded,
+            iconColor: const Color(0xFFD97706),
+            title: 'Jabatan & Tugas Tambahan',
+            badgeText: 'STRUKTURAL',
+            badgeBgColor: const Color(0xFFFEF3C7),
+            badgeTextColor: const Color(0xFFB45309),
+            content: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: data.akademik.jabatanAktif
+                  .map(
+                    (j) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 14,
+                            color: Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            j,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF92400E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAcademicCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String badgeText,
+    required Color badgeBgColor,
+    required Color badgeTextColor,
+    required Widget content,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1705,155 +2140,411 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.school_outlined,
-                color: Color(0xFF2563EB),
-                size: 20,
-              ),
+              Icon(icon, color: iconColor, size: 19),
               const SizedBox(width: 8),
-              Text(
-                'Penugasan Akademik',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                  ),
                 ),
               ),
-              const Spacer(),
-              if (data.akademik.tahunAjaran != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
-                  ),
-                  child: Text(
-                    data.akademik.tahunAjaran!,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1D4ED8),
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeBgColor,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: badgeTextColor.withOpacity(0.2)),
+                ),
+                child: Text(
+                  badgeText,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    color: badgeTextColor,
                   ),
                 ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFDE68A)),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: Color(0xFFD97706),
-                  size: 16,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Data penugasan wali kelas, mata pelajaran, dan jabatan dikelola terpusat oleh Administrator Kurikulum.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF92400E),
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Teaser Daftar Mapel
-          Text(
-            'Mata Pelajaran yang Diampu:',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF334155),
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (data.akademik.mapelDiampu.isEmpty)
-            const Text(
-              'Belum ada mata pelajaran terdaftar pada tahun ajaran ini.',
-              style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
-            )
-          else
-            ...data.akademik.mapelDiampu.map(
-              (m) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: Color(0xFF059669),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      m,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          const SizedBox(height: 14),
+          content,
         ],
       ),
     );
   }
 
   // =========================================================================
-  // TAB 3: KEAMANAN KATA SANDI (DISELESAIKAN PENUH DI TAHAP 5)
+  // TAB 3: KEAMANAN KATA SANDI, INFORMASI SESI & LOGOUT
   // =========================================================================
 
   Widget _buildTabKeamanan(GuruProfilData data) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return Form(
+      key: _passwordFormKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.lock_outline_rounded,
-                color: Color(0xFFDC2626),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Keamanan & Kata Sandi Akun',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
+          // Card 1: Ganti Kata Sandi
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.lock_reset_rounded,
+                      color: Color(0xFFDC2626),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Ubah Kata Sandi Akun',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Gunakan kombinasi sandi yang aman dan tidak mudah ditebak:',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Field Kata Sandi Saat Ini
+                Text(
+                  'Kata Sandi Saat Ini *',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: _obscureCurrentPassword,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureCurrentPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 18,
+                        color: const Color(0xFF64748B),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureCurrentPassword = !_obscureCurrentPassword;
+                        });
+                      },
+                    ),
+                    hintText: 'Masukkan kata sandi lama Anda',
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Kata sandi saat ini wajib diisi.';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 14),
+
+                // Field Kata Sandi Baru
+                Text(
+                  'Kata Sandi Baru *',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: _obscureNewPassword,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.key_rounded, size: 18),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureNewPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 18,
+                        color: const Color(0xFF64748B),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureNewPassword = !_obscureNewPassword;
+                        });
+                      },
+                    ),
+                    hintText: 'Minimal 8 karakter',
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Kata sandi baru wajib diisi.';
+                    }
+                    if (v.trim().length < 8) {
+                      return 'Kata sandi baru minimal 8 karakter.';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 14),
+
+                // Field Konfirmasi Kata Sandi Baru
+                Text(
+                  'Ulangi Kata Sandi Baru *',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _newPasswordConfirmController,
+                  obscureText: _obscureConfirmPassword,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 18,
+                        color: const Color(0xFF64748B),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
+                    hintText: 'Ketik ulang kata sandi baru',
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Konfirmasi kata sandi wajib diisi.';
+                    }
+                    if (v != _newPasswordController.text) {
+                      return 'Konfirmasi kata sandi tidak cocok.';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // Tombol Simpan Password
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: _isUpdatingPassword ? null : _handleUpdatePassword,
+                  child: _isUpdatingPassword
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.shield_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Perbarui Kata Sandi Akun',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Card 2: Informasi Aplikasi & Server Sesi
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.smartphone_rounded,
+                        color: Color(0xFF2563EB),
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.schoolName,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Aplikasi Mobile Portal Sekolah • Versi 1.0.0+1',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Card 3: Tombol Logout / Keluar Akun
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1F2),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFFECDD3)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _handleLogout,
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.logout_rounded,
+                        color: Color(0xFFE11D48),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Keluar dari Akun Portal Guru',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFBE123C),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Formulir ganti password akun dan pengelolaan sesi keamanan login akan aktif sepenuhnya pada Tahap 5.',
-            style: TextStyle(
-              fontSize: 11.5,
-              color: Color(0xFF64748B),
-              height: 1.4,
             ),
           ),
         ],
