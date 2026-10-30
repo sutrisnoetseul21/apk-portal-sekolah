@@ -97,6 +97,61 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
       return;
     }
 
+    // Konfirmasi eksplisit saat menandai kasus sebagai 'selesai'
+    if (_selectedStatus == 'selesai' && _laporan!.status != 'selesai') {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF059669),
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Selesaikan Kasus?',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Apakah Anda yakin kasus perundungan ini telah selesai diinvestigasi dan dimediasi dengan tuntas? Status laporan akan ditandai sebagai "Selesai".',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: const Color(0xFF475569),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF059669),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Ya, Selesaikan'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
@@ -141,14 +196,15 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
     }
   }
 
-  Future<void> _openWhatsApp(String phone, String studentName) async {
+  Future<void> _openWhatsApp(String phone, String studentName, {bool isSiswa = false}) async {
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
     final formattedPhone = cleanPhone.startsWith('08')
         ? '628${cleanPhone.substring(2)}'
         : cleanPhone;
 
+    final targetLabel = isSiswa ? 'Siswa Ananda $studentName' : 'Bapak/Ibu Wali Murid dari $studentName';
     final message = Uri.encodeComponent(
-      'Halo Bapak/Ibu Wali Murid dari $studentName, kami dari tim penanganan sekolah (${widget.schoolName}) terkait laporan SPIKAP #${widget.ticketNumber}. Mohon waktu untuk konfirmasi.',
+      'Halo $targetLabel, kami dari tim penanganan sekolah (${widget.schoolName}) terkait laporan SPIKAP #${widget.ticketNumber}. Mohon waktu untuk konfirmasi.',
     );
 
     final waUrl = Uri.parse('https://wa.me/$formattedPhone?text=$message');
@@ -163,6 +219,26 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal membuka WhatsApp: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openVideo(SpikapLampiranItem lampiran) async {
+    final uri = Uri.parse(lampiran.url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Tidak dapat memutar berkas video';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membuka video: $e'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -542,6 +618,55 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
               ],
             ),
           ],
+
+          if (s.noHp != null && s.noHp!.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Nomor HP Siswa:',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      Text(
+                        s.noHp!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0284C7),
+                    side: const BorderSide(color: Color(0xFF0284C7)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.chat_outlined, size: 14),
+                  label: const Text(
+                    'WA Siswa',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () => _openWhatsApp(s.noHp!, s.name, isSiswa: true),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -725,6 +850,8 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
                   onTap: () {
                     if (isFoto) {
                       _showImagePreview(lamp);
+                    } else {
+                      _openVideo(lamp);
                     }
                   },
                   borderRadius: BorderRadius.circular(12),
@@ -752,11 +879,25 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
                             ),
                           )
                         else
-                          const Center(
-                            child: Icon(
-                              Icons.videocam_rounded,
-                              size: 32,
-                              color: Color(0xFFDC2626),
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.play_circle_fill_rounded,
+                                  size: 36,
+                                  color: Color(0xFFDC2626),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Putar Video',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFFDC2626),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         Positioned(
@@ -788,7 +929,7 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            '* Ketuk foto untuk memperbesar',
+            '* Ketuk foto untuk memperbesar atau video untuk memutar',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
               color: const Color(0xFF94A3B8),
@@ -1155,3 +1296,4 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
     );
   }
 }
+
