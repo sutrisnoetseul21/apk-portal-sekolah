@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'core/config/app_config.dart';
 import 'core/constants/app_colors.dart';
@@ -6,6 +7,23 @@ import 'features/auth/screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Konfigurasi Navigasi Sistem Android: Memastikan tombol navigasi bawah
+  // (Back, Home, Recent Apps) dan Status Bar atas selalu tampil (Non-Fullscreen).
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
+  );
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ),
+  );
+
   runApp(const SmartSchoolApp());
 }
 

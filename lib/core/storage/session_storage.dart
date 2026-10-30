@@ -8,6 +8,8 @@ class SavedUserSession {
   final String roleLabel;
   final String? token;
   final String schoolName;
+  final String? schoolLogoUrl;
+  final String? schoolLogoBase64;
 
   const SavedUserSession({
     required this.role,
@@ -16,6 +18,8 @@ class SavedUserSession {
     required this.roleLabel,
     this.token,
     required this.schoolName,
+    this.schoolLogoUrl,
+    this.schoolLogoBase64,
   });
 }
 
@@ -33,6 +37,8 @@ class SessionStorage {
   static const String _keyRoleLabel = 'auth_role_label';
   static const String _keyToken = 'auth_token';
   static const String _keySchoolName = 'auth_school_name';
+  static const String _keySchoolLogoUrl = 'auth_school_logo_url';
+  static const String _keySchoolLogoBase64 = 'auth_school_logo_base64';
 
   // Fallback in-memory jika platform web/linux membatasi secure storage
   static SavedUserSession? _memoryFallback;
@@ -45,6 +51,8 @@ class SessionStorage {
     required String roleLabel,
     String? token,
     required String schoolName,
+    String? schoolLogoUrl,
+    String? schoolLogoBase64,
   }) async {
     _memoryFallback = SavedUserSession(
       role: role,
@@ -53,6 +61,8 @@ class SessionStorage {
       roleLabel: roleLabel,
       token: token,
       schoolName: schoolName,
+      schoolLogoUrl: schoolLogoUrl,
+      schoolLogoBase64: schoolLogoBase64,
     );
 
     try {
@@ -67,6 +77,16 @@ class SessionStorage {
         await _storage.delete(key: _keyToken);
       }
       await _storage.write(key: _keySchoolName, value: schoolName);
+      if (schoolLogoUrl != null && schoolLogoUrl.isNotEmpty) {
+        await _storage.write(key: _keySchoolLogoUrl, value: schoolLogoUrl);
+      } else {
+        await _storage.delete(key: _keySchoolLogoUrl);
+      }
+      if (schoolLogoBase64 != null && schoolLogoBase64.isNotEmpty) {
+        await _storage.write(key: _keySchoolLogoBase64, value: schoolLogoBase64);
+      } else {
+        await _storage.delete(key: _keySchoolLogoBase64);
+      }
     } catch (_) {
       // Tetap aman menggunakan _memoryFallback jika storage gagal diakses
     }
@@ -89,6 +109,8 @@ class SessionStorage {
         final schoolName =
             await _storage.read(key: _keySchoolName) ??
             'SMP Negeri 3 Kedungreja';
+        final schoolLogoUrl = await _storage.read(key: _keySchoolLogoUrl);
+        final schoolLogoBase64 = await _storage.read(key: _keySchoolLogoBase64);
 
         return SavedUserSession(
           role: role,
@@ -97,6 +119,8 @@ class SessionStorage {
           roleLabel: roleLabel,
           token: token,
           schoolName: schoolName,
+          schoolLogoUrl: schoolLogoUrl,
+          schoolLogoBase64: schoolLogoBase64,
         );
       }
     } catch (_) {}
@@ -115,6 +139,8 @@ class SessionStorage {
       await _storage.delete(key: _keyRoleLabel);
       await _storage.delete(key: _keyToken);
       await _storage.delete(key: _keySchoolName);
+      await _storage.delete(key: _keySchoolLogoUrl);
+      await _storage.delete(key: _keySchoolLogoBase64);
     } catch (_) {}
   }
 }

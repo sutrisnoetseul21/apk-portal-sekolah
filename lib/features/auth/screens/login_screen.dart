@@ -225,6 +225,8 @@ class _LoginScreenState extends State<LoginScreen> {
       roleLabel: roleLabel,
       token: token,
       schoolName: _schoolName,
+      schoolLogoUrl: _logoUrl,
+      schoolLogoBase64: _logoBase64,
     );
 
     if (!mounted) return;
