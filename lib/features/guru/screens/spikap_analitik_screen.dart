@@ -532,6 +532,11 @@ class _SpikapAnalitikScreenState extends State<SpikapAnalitikScreen> {
   }
 
   Widget _buildTrenBulananCard(SpikapAnalitikData data) {
+    final maxMonthly = data.monthlyTrend.fold<int>(
+      0,
+      (prev, element) => element.total > prev ? element.total : prev,
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -561,7 +566,7 @@ class _SpikapAnalitikScreenState extends State<SpikapAnalitikScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          if (data.monthlyTrend.isEmpty)
+          if (data.monthlyTrend.isEmpty || maxMonthly == 0)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -576,81 +581,139 @@ class _SpikapAnalitikScreenState extends State<SpikapAnalitikScreen> {
             )
           else
             Column(
-              children: data.monthlyTrend.map((m) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 70,
-                        child: Text(
-                          m.label,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF475569),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Row(
+              children: [
+                ...data.monthlyTrend.map((m) {
+                  final barRatio = maxMonthly > 0 ? (m.total / maxMonthly).clamp(0.05, 1.0) : 0.0;
+                  final daruratRatio = m.total > 0 ? (m.darurat / m.total) : 0.0;
+                  final biasaRatio = m.total > 0 ? (m.biasa / m.total) : 0.0;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            if (m.darurat > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFDC2626),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '🚨 ${m.darurat}',
+                            Text(
+                              m.label,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                if (m.darurat > 0) ...[
+                                  Text(
+                                    '🚨 ${m.darurat}',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFFDC2626),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                Text(
+                                  'Total: ${m.total} Kasus',
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: const Color(0xFF0F172A),
                                   ),
                                 ),
-                              ),
-                            if (m.darurat > 0) const SizedBox(width: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE2E8F0),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Biasa: ${m.biasa}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF475569),
-                                ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
-                      ),
-                      Text(
-                        'Total: ${m.total}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0F172A),
+                        const SizedBox(height: 6),
+                        // Proportional Stacked Bar
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Container(
+                            height: 10,
+                            width: double.infinity,
+                            color: const Color(0xFFF1F5F9),
+                            child: FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: barRatio,
+                              child: Row(
+                                children: [
+                                  if (m.darurat > 0)
+                                    Flexible(
+                                      flex: (daruratRatio * 100).toInt(),
+                                      child: Container(color: const Color(0xFFDC2626)),
+                                    ),
+                                  if (m.biasa > 0)
+                                    Flexible(
+                                      flex: (biasaRatio * 100).toInt(),
+                                      child: Container(color: const Color(0xFF3B82F6)),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFDC2626),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Darurat',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF3B82F6),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Biasa',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
         ],
       ),
     );
   }
 }
+
