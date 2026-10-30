@@ -100,5 +100,22 @@ class ApiEndpoints {
       '/guru/spikap/laporan/$id/status';
   static String guruSpikapLampiran(String id) => '/guru/spikap/lampiran/$id';
   static const String guruSpikapAnalitik = '/guru/spikap/analitik';
+
+  // Menu 8: Perpustakaan (/guru/perpustakaan/*)
+  static const String guruPerpustakaanSummary = '/guru/perpustakaan/summary';
+  static const String guruPerpustakaanKategori = '/guru/perpustakaan/kategori';
+  static const String guruPerpustakaanKatalog = '/guru/perpustakaan/katalog';
+  static String guruPerpustakaanDetailBuku(String id) =>
+      '/guru/perpustakaan/katalog/$id';
+  static const String guruPerpustakaanPinjamanSaya =
+      '/guru/perpustakaan/pinjaman-saya';
+  static const String guruPerpustakaanRiwayatPinjaman =
+      '/guru/perpustakaan/riwayat-pinjaman';
+  static const String guruPerpustakaanKunjunganSaya =
+      '/guru/perpustakaan/kunjungan-saya';
+  static const String guruPerpustakaanKelasAmpu =
+      '/guru/perpustakaan/kelas-ampu';
+  static const String guruPerpustakaanPinjamanSiswa =
+      '/guru/perpustakaan/pinjaman-siswa';
 }
 
