@@ -9,6 +9,7 @@ import 'widgets/guru_wali/modal_jurnal_klasikal.dart';
 import 'widgets/guru_wali/modal_pemantauan_sheet.dart';
 import 'widgets/guru_wali/dialog_cetak_pdf.dart';
 import 'widgets/guru_wali/chat_konsultasi_sheet.dart';
+import 'detail_presensi_siswa_screen.dart';
 
 /// Halaman Utama Menu 5: Guru Wali (SI-WALI)
 /// Mengimplementasikan Single Command Center (Layar Utama Terpadu)
@@ -229,6 +230,19 @@ class _GuruWaliScreenState extends State<GuruWaliScreen> {
       _searchJurnalController.text = siswa.name;
     });
     _loadJurnals();
+  }
+
+  void _onBukaDetailPresensiSiswa(String studentId, String studentName) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DetailPresensiSiswaScreen(
+          studentId: studentId,
+          studentName: studentName,
+          token: widget.token,
+          identifier: widget.identifier,
+        ),
+      ),
+    );
   }
 
   void _openChat(String konsultasiId) {
@@ -1012,41 +1026,49 @@ class _GuruWaliScreenState extends State<GuruWaliScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar dengan Ring Status 🟢/🟡
-              Stack(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: ringColor, width: 2),
-                    ),
-                    child: ClipOval(
-                      child: siswa.avatarUrl != null &&
-                              siswa.avatarUrl!.isNotEmpty
-                          ? Image.network(
-                              siswa.avatarUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _buildAvatarFallback(siswa),
-                            )
-                          : _buildAvatarFallback(siswa),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: ringColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+              // Avatar dengan Ring Status 🟢/🟡 (Klik untuk Detail Presensi)
+              GestureDetector(
+                onTap: () => _onBukaDetailPresensiSiswa(
+                    siswa.studentId, siswa.name),
+                child: Tooltip(
+                  message: 'Lihat Detail Presensi ${siswa.name}',
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: ringColor, width: 2),
+                        ),
+                        child: ClipOval(
+                          child: siswa.avatarUrl != null &&
+                                  siswa.avatarUrl!.isNotEmpty
+                              ? Image.network(
+                                  siswa.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _buildAvatarFallback(siswa),
+                                )
+                              : _buildAvatarFallback(siswa),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: ringColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
               const SizedBox(width: 8),
 
@@ -1106,24 +1128,49 @@ class _GuruWaliScreenState extends State<GuruWaliScreen> {
 
           const SizedBox(height: 8),
 
-          // Nama Siswa & NISN
-          Text(
-            siswa.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            'NISN: ${siswa.nisn}',
-            style: const TextStyle(
-              fontSize: 9.5,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
+          // Nama Siswa & NISN (Klik untuk Buka Detail Presensi Siswa)
+          InkWell(
+            onTap: () => _onBukaDetailPresensiSiswa(
+                siswa.studentId, siswa.name),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          siswa.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 14,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    'NISN: ${siswa.nisn}',
+                    style: const TextStyle(
+                      fontSize: 9.5,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -1297,57 +1344,67 @@ class _GuruWaliScreenState extends State<GuruWaliScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final item = list[index];
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF64748B).withOpacity(0.1),
-                  shape: BoxShape.circle,
+        return InkWell(
+          onTap: () => _onBukaDetailPresensiSiswa(item.studentId, item.name),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF64748B).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.archive_outlined,
+                      size: 16, color: Color(0xFF64748B)),
                 ),
-                child: const Icon(Icons.archive_outlined,
-                    size: 16, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'NISN: ${item.nisn} • ${item.kelasName}',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF64748B),
+                      Text(
+                        'NISN: ${item.nisn} • ${item.kelasName}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Text(
-                'Th. ${item.tahunMasuk ?? "-"}',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                Text(
+                  'Th. ${item.tahunMasuk ?? "-"}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
                   color: Color(0xFF94A3B8),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
