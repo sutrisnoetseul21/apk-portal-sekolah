@@ -10,6 +10,8 @@ import 'presensi_kelas_screen.dart';
 import 'presensi_sholat_dhuhur_screen.dart';
 import 'guru_wali_screen.dart';
 import 'data_siswa_screen.dart';
+import 'spikap_screen.dart';
+import 'widgets/dialog_akses_spikap_ditolak.dart';
 
 /// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
 /// Menampilkan 9 Menu Kotak-Kotak mengacu pada /portal-guru
@@ -43,6 +45,9 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
   int _activeBooksCount = 0;
   int _pendingKonsultasiCount = 0;
   int _spikapCount = 0;
+  bool _canAccessSpikap = false;
+  String _spikapRoleLabel = 'Guru Mata Pelajaran';
+  int _spikapDaruratCount = 0;
   bool _enableSholatDhuhur = true;
   String? _resolvedTeacherName;
 
@@ -98,6 +103,11 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
             _pendingKonsultasiCount =
                 (d['pending_konsultasi_count'] as num?)?.toInt() ?? 0;
             _spikapCount = (d['spikap_count'] as num?)?.toInt() ?? 0;
+            _canAccessSpikap = d['can_access_spikap'] == true;
+            _spikapRoleLabel =
+                d['spikap_role_label']?.toString() ?? 'Guru Mata Pelajaran';
+            _spikapDaruratCount =
+                (d['spikap_darurat_count'] as num?)?.toInt() ?? 0;
             _enableSholatDhuhur = d['enable_sholat_dhuhur'] != false;
           });
         }
@@ -185,6 +195,29 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .push(
           MaterialPageRoute(
             builder: (_) => DataSiswaScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openSpikapMenu() {
+    if (!_canAccessSpikap) {
+      DialogAksesSpikapDitolak.show(
+        context,
+        currentRoleLabel: _spikapRoleLabel,
+      );
+      return;
+    }
+
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => SpikapScreen(
               teacherName: _resolvedTeacherName ?? widget.teacherName,
               token: widget.token,
               identifier: widget.identifier,
@@ -652,11 +685,19 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 title: 'SPIKAP (Anti-Perundungan & Pengaduan Siswa)',
                 description:
                     'Layanan penanganan perundungan siswa, pantau aduan masuk, dan investigasi tindak lanjut.',
-                badgeText: '$_spikapCount Laporan',
-                icon: Icons.warning_amber_rounded,
-                accentColor: const Color(0xFFDC2626),
-                primaryActionLabel: 'Buka SPIKAP',
-                onTap: () => _showStepNotice('SPIKAP', 7),
+                badgeText: !_canAccessSpikap
+                    ? 'Akses Khusus (BK/Wali/KS)'
+                    : (_spikapDaruratCount > 0
+                        ? '$_spikapDaruratCount Darurat 🚨'
+                        : '$_spikapCount Laporan'),
+                icon: Icons.shield_outlined,
+                accentColor: !_canAccessSpikap
+                    ? const Color(0xFF64748B)
+                    : const Color(0xFFDC2626),
+                primaryActionLabel:
+                    !_canAccessSpikap ? 'Lihat Ketentuan Akses' : 'Buka SPIKAP',
+                isReady: true,
+                onTap: _openSpikapMenu,
               ),
 
               // MENU 8: Perpustakaan

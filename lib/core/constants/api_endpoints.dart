@@ -91,5 +91,14 @@ class ApiEndpoints {
       '/guru/data-siswa/cetak-kartu-massal';
   static const String guruDataSiswaCetakBiodataMassal =
       '/guru/data-siswa/cetak-biodata-massal';
+
+  // Menu 7: SPIKAP (/portal-guru/spikap/*)
+  static const String guruSpikapCheckAccess = '/guru/spikap/check-access';
+  static const String guruSpikapInbox = '/guru/spikap/inbox';
+  static String guruSpikapDetail(String id) => '/guru/spikap/laporan/$id';
+  static String guruSpikapUpdateStatus(String id) =>
+      '/guru/spikap/laporan/$id/status';
+  static String guruSpikapLampiran(String id) => '/guru/spikap/lampiran/$id';
+  static const String guruSpikapAnalitik = '/guru/spikap/analitik';
 }
 
