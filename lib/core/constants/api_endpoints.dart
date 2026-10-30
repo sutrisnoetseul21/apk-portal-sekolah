@@ -117,5 +117,11 @@ class ApiEndpoints {
       '/guru/perpustakaan/kelas-ampu';
   static const String guruPerpustakaanPinjamanSiswa =
       '/guru/perpustakaan/pinjaman-siswa';
+
+  // Menu 9: Profil Saya (/guru/profil/*)
+  static const String guruProfil = '/guru/profil';
+  static const String guruProfilKontak = '/guru/profil/kontak';
+  static const String guruProfilFoto = '/guru/profil/foto';
+  static const String guruProfilPassword = '/guru/profil/password';
 }
 
