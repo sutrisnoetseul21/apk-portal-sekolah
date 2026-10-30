@@ -25,6 +25,7 @@ Direktori ini dirancang khusus dengan pola terstruktur (mirip dengan dokumentasi
 | **13** | [`13-plan-menu-5-guru-wali.md`](file:///home/sutris-remote/Documents/projek-laravel/apk-android-presensi/docs/13-plan-menu-5-guru-wali.md) | **Analisa & Plan Matang Menu 5 (Guru Wali SI-WALI)**: Bedah detail `/portal-guru/guru-wali/*` (Permendikdasmen 11/2025, Single Command Center, Model Kotak-Kotak Siswa Asuh, Bimbingan Klasikal & Individu, Ruang Aman Cerita, Push Notif FCM). |
 | **14** | [`14-plan-menu-6-data-siswa.md`](file:///home/sutris-remote/Documents/projek-laravel/apk-android-presensi/docs/14-plan-menu-6-data-siswa.md) | **Analisa & Plan Matang Menu 6 (Data Siswa)**: Bedah detail `/portal-guru/data-siswa` (Direktori Siswa Binaan, Kartu Barcode, Edit Biodata, WhatsApp Ortu 1-Klik, Reset Password Akun, Cetak PDF Kartu & Biodata). |
 | **15** | [`15-plan-menu-7-spikap.md`](file:///home/sutris-remote/Documents/projek-laravel/apk-android-presensi/docs/15-plan-menu-7-spikap.md) | **Analisa & Plan Matang Menu 7 (SPIKAP Anti-Perundungan)**: Bedah detail `/portal-guru/spikap` (Hak Akses Ketat BK/Wali/KS, Kotak Masuk Kasus, Lembar Investigasi & Bukti, Form Status & WA Ortu, serta Analitik Kasus). |
+| **16** | [`16-plan-menu-8-perpustakaan.md`](file:///home/sutris-remote/Documents/projek-laravel/apk-android-presensi/docs/16-plan-menu-8-perpustakaan.md) | **Analisa & Plan Matang Menu 8 (Perpustakaan)**: Bedah detail `/portal-guru/perpustakaan` (Katalog Buku, Pinjaman Pribadi, Riwayat Pribadi, Kunjungan Fisik, & Pemantauan Literasi Siswa Kelas Ampu). |
 
 ---
 
