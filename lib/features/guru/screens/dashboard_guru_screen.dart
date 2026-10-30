@@ -9,6 +9,7 @@ import 'ijin_kehadiran_screen.dart';
 import 'presensi_kelas_screen.dart';
 import 'presensi_sholat_dhuhur_screen.dart';
 import 'guru_wali_screen.dart';
+import 'data_siswa_screen.dart';
 
 /// Beranda Utama Portal Guru (Tanpa Navigasi Kiri / Sidebar)
 /// Menampilkan 9 Menu Kotak-Kotak mengacu pada /portal-guru
@@ -169,6 +170,21 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
         .push(
           MaterialPageRoute(
             builder: (_) => GuruWaliScreen(
+              teacherName: _resolvedTeacherName ?? widget.teacherName,
+              token: widget.token,
+              identifier: widget.identifier,
+              schoolName: widget.schoolName,
+            ),
+          ),
+        )
+        .then((_) => _fetchSummary());
+  }
+
+  void _openDataSiswaMenu() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => DataSiswaScreen(
               teacherName: _resolvedTeacherName ?? widget.teacherName,
               token: widget.token,
               identifier: widget.identifier,
@@ -626,7 +642,8 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 icon: Icons.badge_outlined,
                 accentColor: const Color(0xFF7C3AED),
                 primaryActionLabel: 'Buka Data Siswa',
-                onTap: () => _showStepNotice('Data Siswa', 6),
+                isReady: true,
+                onTap: _openDataSiswaMenu,
               ),
 
               // MENU 7: SPIKAP (Anti-Perundungan & Pengaduan Siswa)

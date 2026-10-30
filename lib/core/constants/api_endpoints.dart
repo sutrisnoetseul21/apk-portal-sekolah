@@ -70,5 +70,26 @@ class ApiEndpoints {
 
   static const String guruWaliPemantauan = '/guru/guru-wali/pemantauan';
   static const String guruWaliCetakPdf = '/guru/guru-wali/cetak/pdf';
+
+  // Menu 6: Data Siswa (/portal-guru/data-siswa/*)
+  static const String guruDataSiswaOptions = '/guru/data-siswa/options';
+  static const String guruDataSiswaStudents = '/guru/data-siswa/students';
+  static String guruDataSiswaDetail(String id) => '/guru/data-siswa/student/$id';
+  static String guruDataSiswaUpdateBiodata(String id) =>
+      '/guru/data-siswa/student/$id/biodata';
+  static String guruDataSiswaUpdateNoHp(String id) =>
+      '/guru/data-siswa/student/$id/no-hp';
+  static String guruDataSiswaGantiPassword(String id) =>
+      '/guru/data-siswa/student/$id/ganti-password';
+  static String guruDataSiswaUploadFoto(String id) =>
+      '/guru/data-siswa/student/$id/upload-foto';
+  static String guruDataSiswaCetakKartu(String id) =>
+      '/guru/data-siswa/student/$id/cetak-kartu';
+  static String guruDataSiswaCetakBiodata(String id) =>
+      '/guru/data-siswa/student/$id/cetak-biodata';
+  static const String guruDataSiswaCetakKartuMassal =
+      '/guru/data-siswa/cetak-kartu-massal';
+  static const String guruDataSiswaCetakBiodataMassal =
+      '/guru/data-siswa/cetak-biodata-massal';
 }
 
