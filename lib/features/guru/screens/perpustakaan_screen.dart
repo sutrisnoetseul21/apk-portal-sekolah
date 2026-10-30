@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../models/perpustakaan_models.dart';
 import '../services/perpustakaan_service.dart';
@@ -77,6 +78,35 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   bool _hasMoreRiwayatPinjaman = false;
   String? _riwayatPinjamanError;
 
+  // =========================================================================
+  // TAB 4: RIWAYAT KUNJUNGAN PRIBADI STATE
+  // =========================================================================
+  final ScrollController _kunjunganScrollController = ScrollController();
+  List<KunjunganGuruItem> _kunjunganItems = [];
+  bool _isLoadingKunjungan = false;
+  bool _isLoadingMoreKunjungan = false;
+  int _kunjunganPage = 1;
+  bool _hasMoreKunjungan = false;
+  String? _kunjunganError;
+
+  // =========================================================================
+  // TAB 5: PEMINJAMAN SISWA KELAS AMPU STATE
+  // =========================================================================
+  final ScrollController _siswaScrollController = ScrollController();
+  final TextEditingController _siswaSearchController = TextEditingController();
+  Timer? _siswaDebounceTimer;
+
+  List<KelasAmpuItem> _kelasList = [];
+  KelasAmpuItem? _selectedKelas;
+  bool _isLoadingKelas = false;
+
+  List<PinjamanSiswaItem> _pinjamanSiswaItems = [];
+  bool _isLoadingPinjamanSiswa = false;
+  bool _isLoadingMorePinjamanSiswa = false;
+  int _pinjamanSiswaPage = 1;
+  bool _hasMorePinjamanSiswa = false;
+  String? _pinjamanSiswaError;
+
   @override
   void initState() {
     super.initState();
@@ -89,6 +119,8 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     _katalogScrollController.addListener(_onKatalogScroll);
     _pinjamanSayaScrollController.addListener(_onPinjamanSayaScroll);
     _riwayatPinjamanScrollController.addListener(_onRiwayatPinjamanScroll);
+    _kunjunganScrollController.addListener(_onKunjunganScroll);
+    _siswaScrollController.addListener(_onSiswaScroll);
 
     _loadInitialData();
   }
@@ -97,9 +129,14 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   void dispose() {
     _searchController.dispose();
     _debounceTimer?.cancel();
+    _siswaSearchController.dispose();
+    _siswaDebounceTimer?.cancel();
+
     _katalogScrollController.dispose();
     _pinjamanSayaScrollController.dispose();
     _riwayatPinjamanScrollController.dispose();
+    _kunjunganScrollController.dispose();
+    _siswaScrollController.dispose();
     super.dispose();
   }
 
@@ -130,6 +167,24 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     }
   }
 
+  void _onKunjunganScroll() {
+    if (_kunjunganScrollController.position.pixels >=
+            _kunjunganScrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMoreKunjungan &&
+        _hasMoreKunjungan) {
+      _loadMoreKunjungan();
+    }
+  }
+
+  void _onSiswaScroll() {
+    if (_siswaScrollController.position.pixels >=
+            _siswaScrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMorePinjamanSiswa &&
+        _hasMorePinjamanSiswa) {
+      _loadMorePinjamanSiswa();
+    }
+  }
+
   Future<void> _loadInitialData() async {
     _loadSummary();
     _loadKategori();
@@ -139,6 +194,10 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       _loadPinjamanSaya(reset: true);
     } else if (_selectedTabIndex == 2) {
       _loadRiwayatPinjaman(reset: true);
+    } else if (_selectedTabIndex == 3) {
+      _loadKunjungan(reset: true);
+    } else if (_selectedTabIndex == 4) {
+      _loadKelasAmpu();
     } else {
       _loadKatalog(reset: true);
     }
@@ -153,6 +212,10 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       _loadPinjamanSaya(reset: true);
     } else if (index == 2 && _riwayatPinjamanItems.isEmpty) {
       _loadRiwayatPinjaman(reset: true);
+    } else if (index == 3 && _kunjunganItems.isEmpty) {
+      _loadKunjungan(reset: true);
+    } else if (index == 4 && _kelasList.isEmpty) {
+      _loadKelasAmpu();
     }
   }
 
@@ -181,7 +244,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   }
 
   // =========================================================================
-  // TAB 1 KATALOG LOGIC
+  // TAB 1: KATALOG LOGIC
   // =========================================================================
   Future<void> _loadKatalog({bool reset = false}) async {
     if (reset) {
@@ -255,7 +318,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   }
 
   // =========================================================================
-  // TAB 2 PINJAMAN PRIBADI LOGIC
+  // TAB 2: PINJAMAN PRIBADI LOGIC
   // =========================================================================
   Future<void> _loadPinjamanSaya({bool reset = false}) async {
     if (reset) {
@@ -307,7 +370,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   }
 
   // =========================================================================
-  // TAB 3 RIWAYAT PINJAMAN LOGIC
+  // TAB 3: RIWAYAT PINJAMAN LOGIC
   // =========================================================================
   Future<void> _loadRiwayatPinjaman({bool reset = false}) async {
     if (reset) {
@@ -358,6 +421,194 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     await _loadRiwayatPinjaman(reset: false);
   }
 
+  // =========================================================================
+  // TAB 4: RIWAYAT KUNJUNGAN LOGIC
+  // =========================================================================
+  Future<void> _loadKunjungan({bool reset = false}) async {
+    if (reset) {
+      setState(() {
+        _isLoadingKunjungan = true;
+        _kunjunganError = null;
+        _kunjunganPage = 1;
+      });
+    }
+
+    try {
+      final result = await _service.getKunjunganSaya(
+        page: _kunjunganPage,
+        perPage: 10,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (reset) {
+            _kunjunganItems = result.items;
+          } else {
+            _kunjunganItems.addAll(result.items);
+          }
+          _hasMoreKunjungan = result.pagination.hasMorePages;
+          _isLoadingKunjungan = false;
+          _isLoadingMoreKunjungan = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _kunjunganError = e.toString().replaceAll('Exception: ', '');
+          _isLoadingKunjungan = false;
+          _isLoadingMoreKunjungan = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMoreKunjungan() async {
+    if (_isLoadingMoreKunjungan || !_hasMoreKunjungan) return;
+
+    setState(() {
+      _isLoadingMoreKunjungan = true;
+      _kunjunganPage++;
+    });
+
+    await _loadKunjungan(reset: false);
+  }
+
+  // =========================================================================
+  // TAB 5: PEMINJAMAN SISWA KELAS AMPU LOGIC
+  // =========================================================================
+  Future<void> _loadKelasAmpu() async {
+    setState(() => _isLoadingKelas = true);
+    try {
+      final classes = await _service.getKelasAmpu();
+      if (mounted) {
+        setState(() {
+          _kelasList = classes;
+          if (_selectedKelas == null && classes.isNotEmpty) {
+            _selectedKelas = classes.first;
+          }
+          _isLoadingKelas = false;
+        });
+
+        if (_selectedKelas != null) {
+          _loadPinjamanSiswa(reset: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingKelas = false;
+          _pinjamanSiswaError = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPinjamanSiswa({bool reset = false}) async {
+    if (_selectedKelas == null) return;
+
+    if (reset) {
+      setState(() {
+        _isLoadingPinjamanSiswa = true;
+        _pinjamanSiswaError = null;
+        _pinjamanSiswaPage = 1;
+      });
+    }
+
+    try {
+      final result = await _service.getPinjamanSiswa(
+        classId: _selectedKelas!.id,
+        search: _siswaSearchController.text.trim(),
+        page: _pinjamanSiswaPage,
+        perPage: 15,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (reset) {
+            _pinjamanSiswaItems = result.items;
+          } else {
+            _pinjamanSiswaItems.addAll(result.items);
+          }
+          _hasMorePinjamanSiswa = result.pagination.hasMorePages;
+          _isLoadingPinjamanSiswa = false;
+          _isLoadingMorePinjamanSiswa = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _pinjamanSiswaError = e.toString().replaceAll('Exception: ', '');
+          _isLoadingPinjamanSiswa = false;
+          _isLoadingMorePinjamanSiswa = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMorePinjamanSiswa() async {
+    if (_isLoadingMorePinjamanSiswa || !_hasMorePinjamanSiswa) return;
+
+    setState(() {
+      _isLoadingMorePinjamanSiswa = true;
+      _pinjamanSiswaPage++;
+    });
+
+    await _loadPinjamanSiswa(reset: false);
+  }
+
+  void _onSiswaSearchChanged(String query) {
+    _siswaDebounceTimer?.cancel();
+    _siswaDebounceTimer = Timer(const Duration(milliseconds: 350), () {
+      _loadPinjamanSiswa(reset: true);
+    });
+  }
+
+  void _onKelasChanged(KelasAmpuItem kelas) {
+    if (_selectedKelas?.id == kelas.id) return;
+    setState(() {
+      _selectedKelas = kelas;
+      _pinjamanSiswaItems = [];
+    });
+    _loadPinjamanSiswa(reset: true);
+  }
+
+  Future<void> _sendWaReminder(PinjamanSiswaItem item) async {
+    final siswaName = item.siswa.name;
+    final judulBuku = item.buku.judul;
+    final kodeEks = item.buku.kodeEksemplar;
+    final dueDate = item.tanggalJatuhTempo ?? '-';
+    final statusText = item.isTerlambat
+        ? 'telah terlambat ${item.hariTerlambat} hari'
+        : 'akan jatuh tempo pada $dueDate';
+
+    final text = Uri.encodeComponent(
+      'Halo, kami dari Perpustakaan ${widget.schoolName}.\n\n'
+      'Mengingatkan bahwa peminjaman buku perpustakaan atas nama siswa *$siswaName*:\n'
+      '📖 *Judul*: $judulBuku\n'
+      '🏷️ *Kode Eksemplar*: $kodeEks\n'
+      '📅 *Batas Kembali*: $dueDate ($statusText)\n\n'
+      'Mohon untuk segera dikembalikan ke perpustakaan sekolah. Terima kasih.',
+    );
+
+    final waUrl = Uri.parse('https://wa.me/?text=$text');
+    try {
+      if (await canLaunchUrl(waUrl)) {
+        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(waUrl);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat membuka aplikasi WhatsApp'),
+            backgroundColor: AppColors.alpa,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -404,6 +655,10 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                 _loadPinjamanSaya(reset: true);
               } else if (_selectedTabIndex == 2) {
                 _loadRiwayatPinjaman(reset: true);
+              } else if (_selectedTabIndex == 3) {
+                _loadKunjungan(reset: true);
+              } else if (_selectedTabIndex == 4) {
+                _loadPinjamanSiswa(reset: true);
               }
             },
           ),
@@ -419,6 +674,10 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
             await _loadPinjamanSaya(reset: true);
           } else if (_selectedTabIndex == 2) {
             await _loadRiwayatPinjaman(reset: true);
+          } else if (_selectedTabIndex == 3) {
+            await _loadKunjungan(reset: true);
+          } else if (_selectedTabIndex == 4) {
+            await _loadPinjamanSiswa(reset: true);
           }
         },
         child: SingleChildScrollView(
@@ -719,21 +978,9 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       case 2:
         return _buildRiwayatPinjamanTab();
       case 3:
-        return _buildPlaceholderTab(
-          title: 'Riwayat Kunjungan Pribadi',
-          description:
-              'Catatan presensi kehadiran fisik Anda di perpustakaan sekolah.',
-          icon: Icons.badge_outlined,
-          badgeText: 'Tahap 5',
-        );
+        return _buildKunjunganSayaTab();
       case 4:
-        return _buildPlaceholderTab(
-          title: 'Peminjaman Siswa Kelas Ampu',
-          description:
-              'Pantau keterlambatan dan peminjaman buku oleh siswa pada kelas yang Anda ampu.',
-          icon: Icons.groups_rounded,
-          badgeText: 'Tahap 5',
-        );
+        return _buildPinjamanSiswaTab();
       default:
         return _buildKatalogTab();
     }
@@ -2363,72 +2610,889 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   }
 
   // =========================================================================
-  // PLACEHOLDER TAB (UNTUK TAHAP 5: KUNJUNGAN & SISWA)
+  // TAB 4: RIWAYAT KUNJUNGAN PRIBADI GURU
   // =========================================================================
-  Widget _buildPlaceholderTab({
-    required String title,
-    required String description,
-    required IconData icon,
-    required String badgeText,
-  }) {
+  Widget _buildKunjunganSayaTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Card Info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.badge_outlined,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Riwayat Kunjungan Pribadi Anda',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Catatan riwayat presensi kunjungan fisik Anda ke perpustakaan.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          if (_isLoadingKunjungan)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_kunjunganError != null)
+            _buildKunjunganErrorState()
+          else if (_kunjunganItems.isEmpty)
+            _buildKunjunganEmptyState()
+          else ...[
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _kunjunganItems.length,
+              itemBuilder: (context, index) {
+                final item = _kunjunganItems[index];
+                return _buildKunjunganCard(item);
+              },
+            ),
+
+            if (_isLoadingMoreKunjungan)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_hasMoreKunjungan)
+              Center(
+                child: TextButton.icon(
+                  onPressed: _loadMoreKunjungan,
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: const Text('Muat Lebih Banyak Kunjungan'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKunjunganCard(KunjunganGuruItem item) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(28),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 44, color: AppColors.primary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Tanggal & Jam
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.event_available_rounded,
+                        size: 18, color: Colors.blue.shade700),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.tanggal,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time_rounded,
+                              size: 12, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Masuk: ${item.waktuMasuk} WIB',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Badge Tujuan
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Text(
+                  item.tujuanKunjunganLabel,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.blue.shade800,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Akan Dibangun pada $badgeText',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFFB45309),
+
+          if (item.catatan != null && item.catatan!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.notes_rounded,
+                      size: 14, color: Colors.grey.shade500),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      item.catatan!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKunjunganEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.meeting_room_outlined,
+              size: 40,
+              color: Colors.blue.shade400,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
-            title,
+            'Belum Ada Kunjungan',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
-            description,
+            'Anda belum memiliki catatan kunjungan presensi di perpustakaan sekolah.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKunjunganErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline_rounded,
+              size: 40, color: Colors.rose.shade400),
+          const SizedBox(height: 12),
+          Text(
+            _kunjunganError ?? 'Terjadi kesalahan memuat riwayat kunjungan',
             textAlign: TextAlign.center,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               color: AppColors.textSecondary,
-              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: () => _loadKunjungan(reset: true),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Coba Lagi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // TAB 5: PEMINJAMAN SISWA KELAS AMPU
+  // =========================================================================
+  Widget _buildPinjamanSiswaTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Card Info Khusus Siswa Kelas Ampu
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.teal.shade50.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.teal.shade200),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade600,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.groups_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Riwayat Peminjaman Siswa',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.teal.shade900,
+                        ),
+                      ),
+                      Text(
+                        'Pantau peminjaman buku oleh siswa dari kelas yang Anda ampu.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: Colors.teal.shade800.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Selector Kelas Ampu
+          if (_isLoadingKelas)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_kelasList.isEmpty)
+            _buildNoKelasAmpuState()
+          else ...[
+            _buildKelasAmpuChips(),
+
+            const SizedBox(height: 14),
+
+            // Search Bar Siswa / Buku
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.teal.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _siswaSearchController,
+                onChanged: _onSiswaSearchChanged,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Cari nama siswa, NISN, atau judul buku...',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary.withOpacity(0.7),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: Colors.teal.shade600,
+                    size: 20,
+                  ),
+                  suffixIcon: _siswaSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          color: AppColors.textSecondary,
+                          onPressed: () {
+                            _siswaSearchController.clear();
+                            _loadPinjamanSiswa(reset: true);
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Content List Peminjaman Siswa
+            if (_isLoadingPinjamanSiswa)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_pinjamanSiswaError != null)
+              _buildPinjamanSiswaErrorState()
+            else if (_pinjamanSiswaItems.isEmpty)
+              _buildPinjamanSiswaEmptyState()
+            else ...[
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _pinjamanSiswaItems.length,
+                itemBuilder: (context, index) {
+                  final item = _pinjamanSiswaItems[index];
+                  return _buildPinjamanSiswaCard(item);
+                },
+              ),
+
+              if (_isLoadingMorePinjamanSiswa)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKelasAmpuChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _kelasList.map((kelas) {
+          final isSelected = _selectedKelas?.id == kelas.id;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    kelas.name,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.teal.shade900,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withOpacity(0.25)
+                          : Colors.teal.shade50,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      kelas.role,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isSelected ? Colors.white : Colors.teal.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (_) => _onKelasChanged(kelas),
+              selectedColor: Colors.teal.shade600,
+              backgroundColor: Colors.white,
+              checkmarkColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isSelected
+                      ? Colors.teal.shade600
+                      : Colors.teal.shade200,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPinjamanSiswaCard(PinjamanSiswaItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: item.isTerlambat
+              ? Colors.rose.shade200
+              : Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Baris Siswa & Status Badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.teal.shade50,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.teal.shade200),
+                    ),
+                    child: Center(
+                      child: Text(
+                        item.siswa.name.isNotEmpty
+                            ? item.siswa.name
+                                .trim()
+                                .split(' ')
+                                .map((e) => e.isNotEmpty ? e[0] : '')
+                                .take(2)
+                                .join()
+                                .toUpperCase()
+                            : 'S',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: Colors.teal.shade800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.siswa.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (item.siswa.nisn != null &&
+                          item.siswa.nisn!.isNotEmpty)
+                        Text(
+                          'NISN: ${item.siswa.nisn}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Status Badge
+              if (item.isTerlambat)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE4E6),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE11D48),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Terlambat ${item.hariTerlambat} Hari',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFBE123C),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD97706),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Dipinjam',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+
+          const Divider(height: 18),
+
+          // Detail Buku Yang Dipinjam
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.buku.judul,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Penulis: ${item.buku.penulis}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Eksemplar: ${item.buku.kodeEksemplar}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Tanggal
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Pinjam: ${item.tanggalPinjam ?? '-'}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Batas: ${item.tanggalJatuhTempo ?? '-'}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight:
+                          item.isTerlambat ? FontWeight.w700 : FontWeight.w500,
+                      color: item.isTerlambat
+                          ? Colors.rose.shade700
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Tombol WhatsApp Pengingat Otomatis
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _sendWaReminder(item),
+              icon: const Icon(Icons.chat_rounded,
+                  size: 16, color: Color(0xFF25D366)),
+              label: Text(
+                'Kirim Pengingat WhatsApp',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF15803D),
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF86EFAC)),
+                backgroundColor: const Color(0xFFF0FDF4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoKelasAmpuState() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.school_outlined, size: 44, color: Colors.teal.shade300),
+          const SizedBox(height: 12),
+          Text(
+            'Tidak Ada Kelas yang Diampu',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Anda saat ini belum mengampu mata pelajaran atau ditugaskan sebagai wali kelas/BK pada periode aktif ini.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPinjamanSiswaEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.check_circle_outline_rounded,
+              size: 40, color: Colors.teal.shade300),
+          const SizedBox(height: 12),
+          Text(
+            'Tidak Ada Peminjaman Siswa',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tidak ada catatan peminjaman buku aktif oleh siswa untuk kelas ini.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPinjamanSiswaErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline_rounded,
+              size: 40, color: Colors.rose.shade400),
+          const SizedBox(height: 12),
+          Text(
+            _pinjamanSiswaError ?? 'Gagal memuat peminjaman siswa',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: () => _loadPinjamanSiswa(reset: true),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Coba Lagi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
