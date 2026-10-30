@@ -55,6 +55,28 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   bool _hasMoreKatalog = false;
   String? _katalogError;
 
+  // =========================================================================
+  // TAB 2: PINJAMAN PRIBADI STATE
+  // =========================================================================
+  final ScrollController _pinjamanSayaScrollController = ScrollController();
+  List<PeminjamanGuruItem> _pinjamanSayaItems = [];
+  bool _isLoadingPinjamanSaya = false;
+  bool _isLoadingMorePinjamanSaya = false;
+  int _pinjamanSayaPage = 1;
+  bool _hasMorePinjamanSaya = false;
+  String? _pinjamanSayaError;
+
+  // =========================================================================
+  // TAB 3: RIWAYAT PINJAMAN PRIBADI STATE
+  // =========================================================================
+  final ScrollController _riwayatPinjamanScrollController = ScrollController();
+  List<PeminjamanGuruItem> _riwayatPinjamanItems = [];
+  bool _isLoadingRiwayatPinjaman = false;
+  bool _isLoadingMoreRiwayatPinjaman = false;
+  int _riwayatPinjamanPage = 1;
+  bool _hasMoreRiwayatPinjaman = false;
+  String? _riwayatPinjamanError;
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +87,8 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     );
 
     _katalogScrollController.addListener(_onKatalogScroll);
+    _pinjamanSayaScrollController.addListener(_onPinjamanSayaScroll);
+    _riwayatPinjamanScrollController.addListener(_onRiwayatPinjamanScroll);
 
     _loadInitialData();
   }
@@ -74,6 +98,8 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     _searchController.dispose();
     _debounceTimer?.cancel();
     _katalogScrollController.dispose();
+    _pinjamanSayaScrollController.dispose();
+    _riwayatPinjamanScrollController.dispose();
     super.dispose();
   }
 
@@ -86,10 +112,48 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     }
   }
 
+  void _onPinjamanSayaScroll() {
+    if (_pinjamanSayaScrollController.position.pixels >=
+            _pinjamanSayaScrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMorePinjamanSaya &&
+        _hasMorePinjamanSaya) {
+      _loadMorePinjamanSaya();
+    }
+  }
+
+  void _onRiwayatPinjamanScroll() {
+    if (_riwayatPinjamanScrollController.position.pixels >=
+            _riwayatPinjamanScrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMoreRiwayatPinjaman &&
+        _hasMoreRiwayatPinjaman) {
+      _loadMoreRiwayatPinjaman();
+    }
+  }
+
   Future<void> _loadInitialData() async {
     _loadSummary();
     _loadKategori();
-    _loadKatalog(reset: true);
+    if (_selectedTabIndex == 0) {
+      _loadKatalog(reset: true);
+    } else if (_selectedTabIndex == 1) {
+      _loadPinjamanSaya(reset: true);
+    } else if (_selectedTabIndex == 2) {
+      _loadRiwayatPinjaman(reset: true);
+    } else {
+      _loadKatalog(reset: true);
+    }
+  }
+
+  void _onTabChanged(int index) {
+    setState(() => _selectedTabIndex = index);
+
+    if (index == 0 && _katalogItems.isEmpty) {
+      _loadKatalog(reset: true);
+    } else if (index == 1 && _pinjamanSayaItems.isEmpty) {
+      _loadPinjamanSaya(reset: true);
+    } else if (index == 2 && _riwayatPinjamanItems.isEmpty) {
+      _loadRiwayatPinjaman(reset: true);
+    }
   }
 
   Future<void> _loadSummary() async {
@@ -116,6 +180,9 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     } catch (_) {}
   }
 
+  // =========================================================================
+  // TAB 1 KATALOG LOGIC
+  // =========================================================================
   Future<void> _loadKatalog({bool reset = false}) async {
     if (reset) {
       setState(() {
@@ -187,6 +254,110 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
     _loadKatalog(reset: true);
   }
 
+  // =========================================================================
+  // TAB 2 PINJAMAN PRIBADI LOGIC
+  // =========================================================================
+  Future<void> _loadPinjamanSaya({bool reset = false}) async {
+    if (reset) {
+      setState(() {
+        _isLoadingPinjamanSaya = true;
+        _pinjamanSayaError = null;
+        _pinjamanSayaPage = 1;
+      });
+    }
+
+    try {
+      final result = await _service.getPinjamanSaya(
+        page: _pinjamanSayaPage,
+        perPage: 10,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (reset) {
+            _pinjamanSayaItems = result.items;
+          } else {
+            _pinjamanSayaItems.addAll(result.items);
+          }
+          _hasMorePinjamanSaya = result.pagination.hasMorePages;
+          _isLoadingPinjamanSaya = false;
+          _isLoadingMorePinjamanSaya = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _pinjamanSayaError = e.toString().replaceAll('Exception: ', '');
+          _isLoadingPinjamanSaya = false;
+          _isLoadingMorePinjamanSaya = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMorePinjamanSaya() async {
+    if (_isLoadingMorePinjamanSaya || !_hasMorePinjamanSaya) return;
+
+    setState(() {
+      _isLoadingMorePinjamanSaya = true;
+      _pinjamanSayaPage++;
+    });
+
+    await _loadPinjamanSaya(reset: false);
+  }
+
+  // =========================================================================
+  // TAB 3 RIWAYAT PINJAMAN LOGIC
+  // =========================================================================
+  Future<void> _loadRiwayatPinjaman({bool reset = false}) async {
+    if (reset) {
+      setState(() {
+        _isLoadingRiwayatPinjaman = true;
+        _riwayatPinjamanError = null;
+        _riwayatPinjamanPage = 1;
+      });
+    }
+
+    try {
+      final result = await _service.getRiwayatPinjaman(
+        page: _riwayatPinjamanPage,
+        perPage: 10,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (reset) {
+            _riwayatPinjamanItems = result.items;
+          } else {
+            _riwayatPinjamanItems.addAll(result.items);
+          }
+          _hasMoreRiwayatPinjaman = result.pagination.hasMorePages;
+          _isLoadingRiwayatPinjaman = false;
+          _isLoadingMoreRiwayatPinjaman = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _riwayatPinjamanError = e.toString().replaceAll('Exception: ', '');
+          _isLoadingRiwayatPinjaman = false;
+          _isLoadingMoreRiwayatPinjaman = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMoreRiwayatPinjaman() async {
+    if (_isLoadingMoreRiwayatPinjaman || !_hasMoreRiwayatPinjaman) return;
+
+    setState(() {
+      _isLoadingMoreRiwayatPinjaman = true;
+      _riwayatPinjamanPage++;
+    });
+
+    await _loadRiwayatPinjaman(reset: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,7 +398,13 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
             tooltip: 'Segarkan Data',
             onPressed: () {
               _loadSummary();
-              _loadKatalog(reset: true);
+              if (_selectedTabIndex == 0) {
+                _loadKatalog(reset: true);
+              } else if (_selectedTabIndex == 1) {
+                _loadPinjamanSaya(reset: true);
+              } else if (_selectedTabIndex == 2) {
+                _loadRiwayatPinjaman(reset: true);
+              }
             },
           ),
         ],
@@ -235,7 +412,14 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
-          await _loadInitialData();
+          await _loadSummary();
+          if (_selectedTabIndex == 0) {
+            await _loadKatalog(reset: true);
+          } else if (_selectedTabIndex == 1) {
+            await _loadPinjamanSaya(reset: true);
+          } else if (_selectedTabIndex == 2) {
+            await _loadRiwayatPinjaman(reset: true);
+          }
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -462,16 +646,15 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
           final tab = tabs[index];
           final isSiswaTab = index == 4;
 
-          Color selectedBg = isSiswaTab ? Colors.teal.shade600 : AppColors.primary;
+          Color selectedBg =
+              isSiswaTab ? Colors.teal.shade600 : AppColors.primary;
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                  setState(() => _selectedTabIndex = index);
-                },
+                onTap: () => _onTabChanged(index),
                 borderRadius: BorderRadius.circular(16),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -481,9 +664,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                     color: isSelected ? selectedBg : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected
-                          ? selectedBg
-                          : Colors.grey.shade300,
+                      color: isSelected ? selectedBg : Colors.grey.shade300,
                     ),
                     boxShadow: isSelected
                         ? [
@@ -500,7 +681,8 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                       Icon(
                         tab['icon'] as IconData,
                         size: 16,
-                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                        color:
+                            isSelected ? Colors.white : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -509,8 +691,9 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                           fontSize: 13,
                           fontWeight:
                               isSelected ? FontWeight.w700 : FontWeight.w600,
-                          color:
-                              isSelected ? Colors.white : AppColors.textSecondary,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -532,21 +715,9 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       case 0:
         return _buildKatalogTab();
       case 1:
-        return _buildPlaceholderTab(
-          title: 'Pinjaman Pribadi',
-          description:
-              'Daftar buku perpustakaan yang sedang Anda pinjam saat ini.',
-          icon: Icons.bookmark_added_rounded,
-          badgeText: 'Tahap 4',
-        );
+        return _buildPinjamanSayaTab();
       case 2:
-        return _buildPlaceholderTab(
-          title: 'Riwayat Peminjaman Pribadi',
-          description:
-              'Daftar riwayat buku yang telah selesai Anda pinjam dan kembalikan.',
-          icon: Icons.history_edu_rounded,
-          badgeText: 'Tahap 4',
-        );
+        return _buildRiwayatPinjamanTab();
       case 3:
         return _buildPlaceholderTab(
           title: 'Riwayat Kunjungan Pribadi',
@@ -1286,7 +1457,913 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
   }
 
   // =========================================================================
-  // PLACEHOLDER TAB (UNTUK TAHAP 4 & TAHAP 5)
+  // TAB 2: PINJAMAN PRIBADI GURU
+  // =========================================================================
+  Widget _buildPinjamanSayaTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Card Info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.auto_stories_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Buku Yang Sedang Anda Pinjam',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Daftar buku perpustakaan yang saat ini masih Anda pinjam.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          if (_isLoadingPinjamanSaya)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_pinjamanSayaError != null)
+            _buildPinjamanSayaErrorState()
+          else if (_pinjamanSayaItems.isEmpty)
+            _buildPinjamanSayaEmptyState()
+          else ...[
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _pinjamanSayaItems.length,
+              itemBuilder: (context, index) {
+                final item = _pinjamanSayaItems[index];
+                return _buildPinjamanSayaCard(item);
+              },
+            ),
+
+            if (_isLoadingMorePinjamanSaya)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_hasMorePinjamanSaya)
+              Center(
+                child: TextButton.icon(
+                  onPressed: _loadMorePinjamanSaya,
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: const Text('Muat Lebih Banyak'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPinjamanSayaCard(PeminjamanGuruItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: item.isTerlambat
+              ? Colors.rose.shade200
+              : Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: item.buku != null
+              ? () {
+                  DetailBukuBottomSheet.show(
+                    context: context,
+                    bukuId: item.buku!.id,
+                    service: _service,
+                  );
+                }
+              : null,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cover Gambar Buku
+                    Container(
+                      width: 70,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: item.buku?.sampulBukuUrl != null &&
+                              item.buku!.sampulBukuUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: item.buku!.sampulBukuUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              errorWidget: (_, __, ___) =>
+                                  _buildCoverPlaceholder(),
+                            )
+                          : _buildCoverPlaceholder(),
+                    ),
+
+                    const SizedBox(width: 14),
+
+                    // Detail Buku & Status Pinjam
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Status Badge & Kode Eksemplar
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildPinjamanStatusBadge(item),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Text(
+                                  item.kodeEksemplar,
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          // Judul Buku
+                          Text(
+                            item.buku?.judul ?? 'Judul Buku Tidak Diketahui',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              height: 1.25,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+
+                          // Penulis
+                          Text(
+                            item.buku?.penulis ?? '-',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // Info Tanggal
+                          Row(
+                            children: [
+                              Icon(Icons.calendar_today_rounded,
+                                  size: 12, color: Colors.grey.shade500),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Pinjam: ${item.tanggalPinjam ?? '-'}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 12,
+                                color: item.isTerlambat
+                                    ? Colors.rose.shade600
+                                    : Colors.amber.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Batas: ${item.tanggalJatuhTempo ?? '-'}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: item.isTerlambat
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: item.isTerlambat
+                                      ? Colors.rose.shade700
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Box Keterlambatan / Sisa Hari
+                if (item.isTerlambat)
+                  Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE4E6),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFECDD3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded,
+                            size: 16, color: Color(0xFFBE123C)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Terlambat ${item.hariTerlambat} hari! Harap segera kembalikan ke perpustakaan.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFBE123C),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFEF3C7)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.timer_outlined,
+                            size: 16, color: Color(0xFFB45309)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Sisa masa pinjam: ${item.sisaHari} hari lagi.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFB45309),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPinjamanStatusBadge(PeminjamanGuruItem item) {
+    if (item.isTerlambat) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFE4E6),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE11D48),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Terlambat',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFBE123C),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Color(0xFFD97706),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Sedang Dipinjam',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFB45309),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildPinjamanSayaEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.bookmark_remove_rounded,
+              size: 40,
+              color: Colors.blue.shade400,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Tidak Ada Buku Dipinjam',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Anda saat ini tidak sedang meminjam buku perpustakaan. Kunjungi Katalog Buku untuk mencari buku yang menarik!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => _onTabChanged(0),
+            icon: const Icon(Icons.search_rounded, size: 16),
+            label: const Text('Buka Katalog Buku'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPinjamanSayaErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline_rounded,
+              size: 40, color: Colors.rose.shade400),
+          const SizedBox(height: 12),
+          Text(
+            _pinjamanSayaError ?? 'Terjadi kesalahan memuat pinjaman Anda',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: () => _loadPinjamanSaya(reset: true),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Coba Lagi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // TAB 3: RIWAYAT PINJAMAN PRIBADI GURU
+  // =========================================================================
+  Widget _buildRiwayatPinjamanTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Card Info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.history_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Riwayat Peminjaman Pribadi Anda',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Daftar buku yang sudah pernah Anda pinjam dan kembalikan sebelumnya.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          if (_isLoadingRiwayatPinjaman)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_riwayatPinjamanError != null)
+            _buildRiwayatPinjamanErrorState()
+          else if (_riwayatPinjamanItems.isEmpty)
+            _buildRiwayatPinjamanEmptyState()
+          else ...[
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _riwayatPinjamanItems.length,
+              itemBuilder: (context, index) {
+                final item = _riwayatPinjamanItems[index];
+                return _buildRiwayatPinjamanCard(item);
+              },
+            ),
+
+            if (_isLoadingMoreRiwayatPinjaman)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_hasMoreRiwayatPinjaman)
+              Center(
+                child: TextButton.icon(
+                  onPressed: _loadMoreRiwayatPinjaman,
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: const Text('Muat Lebih Banyak Riwayat'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiwayatPinjamanCard(PeminjamanGuruItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: item.buku != null
+              ? () {
+                  DetailBukuBottomSheet.show(
+                    context: context,
+                    bukuId: item.buku!.id,
+                    service: _service,
+                  );
+                }
+              : null,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Cover Gambar Buku
+                Container(
+                  width: 70,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: item.buku?.sampulBukuUrl != null &&
+                          item.buku!.sampulBukuUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: item.buku!.sampulBukuUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (_, __, ___) =>
+                              _buildCoverPlaceholder(),
+                        )
+                      : _buildCoverPlaceholder(),
+                ),
+
+                const SizedBox(width: 14),
+
+                // Detail Buku
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Status Badge
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildRiwayatStatusBadge(item),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              item.kodeEksemplar,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // Judul Buku
+                      Text(
+                        item.buku?.judul ?? 'Judul Buku Tidak Diketahui',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          height: 1.25,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+
+                      // Penulis
+                      Text(
+                        item.buku?.penulis ?? '-',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Info Waktu Pinjam & Kembali
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 12, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Dipinjam: ${item.tanggalPinjam ?? '-'}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle_rounded,
+                              size: 12, color: Colors.emerald.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Kembali: ${item.tanggalKembali ?? '-'}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.emerald.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRiwayatStatusBadge(PeminjamanGuruItem item) {
+    if (item.status.toLowerCase() == 'dikembalikan') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFD1FAE5),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 5,
+              height: 5,
+              decoration: const BoxDecoration(
+                color: Color(0xFF059669),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Dikembalikan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF047857),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Text(
+          item.status.toUpperCase(),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildRiwayatPinjamanEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.history_rounded,
+              size: 40,
+              color: Colors.blue.shade400,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Belum Ada Riwayat Peminjaman',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Anda belum memiliki catatan riwayat peminjaman buku perpustakaan sebelumnya.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiwayatPinjamanErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline_rounded,
+              size: 40, color: Colors.rose.shade400),
+          const SizedBox(height: 12),
+          Text(
+            _riwayatPinjamanError ?? 'Terjadi kesalahan memuat riwayat Anda',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: () => _loadRiwayatPinjaman(reset: true),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Coba Lagi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // PLACEHOLDER TAB (UNTUK TAHAP 5: KUNJUNGAN & SISWA)
   // =========================================================================
   Widget _buildPlaceholderTab({
     required String title,
