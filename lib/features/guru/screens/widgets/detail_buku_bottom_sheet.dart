@@ -167,7 +167,7 @@ class _DetailBukuBottomSheetState extends State<DetailBukuBottomSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.error_outline_rounded,
-                size: 48, color: Colors.rose.shade400),
+                size: 48, color: Colors.pink.shade400),
             const SizedBox(height: 12),
             Text(
               _errorMessage ?? 'Terjadi kesalahan memuat detail buku',
@@ -657,7 +657,7 @@ class _DetailBukuBottomSheetState extends State<DetailBukuBottomSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isTersedia ? Colors.grey.shade200 : Colors.rose.shade100,
+          color: isTersedia ? Colors.grey.shade200 : Colors.pink.shade100,
         ),
         boxShadow: [
           BoxShadow(
@@ -673,7 +673,7 @@ class _DetailBukuBottomSheetState extends State<DetailBukuBottomSheet> {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isTersedia
-                  ? Colors.emerald.shade50
+                  ? Colors.teal.shade50
                   : Colors.amber.shade50,
               borderRadius: BorderRadius.circular(10),
             ),
@@ -681,7 +681,7 @@ class _DetailBukuBottomSheetState extends State<DetailBukuBottomSheet> {
               Icons.qr_code_2_rounded,
               size: 20,
               color: isTersedia
-                  ? Colors.emerald.shade700
+                  ? Colors.teal.shade700
                   : Colors.amber.shade800,
             ),
           ),

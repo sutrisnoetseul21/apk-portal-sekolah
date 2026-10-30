@@ -1675,7 +1675,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       child: Column(
         children: [
           Icon(Icons.error_outline_rounded,
-              size: 40, color: Colors.rose.shade400),
+              size: 40, color: Colors.pink.shade400),
           const SizedBox(height: 12),
           Text(
             _katalogError ?? 'Terjadi kesalahan memuat katalog',
@@ -1815,7 +1815,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: item.isTerlambat
-              ? Colors.rose.shade200
+              ? Colors.pink.shade200
               : Colors.grey.shade200,
         ),
         boxShadow: [
@@ -1954,7 +1954,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                                 Icons.schedule_rounded,
                                 size: 12,
                                 color: item.isTerlambat
-                                    ? Colors.rose.shade600
+                                    ? Colors.pink.shade600
                                     : Colors.amber.shade700,
                               ),
                               const SizedBox(width: 4),
@@ -1966,7 +1966,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                                       ? FontWeight.w700
                                       : FontWeight.w500,
                                   color: item.isTerlambat
-                                      ? Colors.rose.shade700
+                                      ? Colors.pink.shade700
                                       : AppColors.textPrimary,
                                 ),
                               ),
@@ -2180,7 +2180,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       child: Column(
         children: [
           Icon(Icons.error_outline_rounded,
-              size: 40, color: Colors.rose.shade400),
+              size: 40, color: Colors.pink.shade400),
           const SizedBox(height: 12),
           Text(
             _pinjamanSayaError ?? 'Terjadi kesalahan memuat pinjaman Anda',
@@ -2449,14 +2449,14 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                       Row(
                         children: [
                           Icon(Icons.check_circle_rounded,
-                              size: 12, color: Colors.emerald.shade600),
+                              size: 12, color: Colors.teal.shade600),
                           const SizedBox(width: 4),
                           Text(
                             'Kembali: ${item.tanggalKembali ?? '-'}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Colors.emerald.shade700,
+                              color: Colors.teal.shade700,
                             ),
                           ),
                         ],
@@ -2581,7 +2581,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       child: Column(
         children: [
           Icon(Icons.error_outline_rounded,
-              size: 40, color: Colors.rose.shade400),
+              size: 40, color: Colors.pink.shade400),
           const SizedBox(height: 12),
           Text(
             _riwayatPinjamanError ?? 'Terjadi kesalahan memuat riwayat Anda',
@@ -2890,7 +2890,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       child: Column(
         children: [
           Icon(Icons.error_outline_rounded,
-              size: 40, color: Colors.rose.shade400),
+              size: 40, color: Colors.pink.shade400),
           const SizedBox(height: 12),
           Text(
             _kunjunganError ?? 'Terjadi kesalahan memuat riwayat kunjungan',
@@ -3148,7 +3148,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: item.isTerlambat
-              ? Colors.rose.shade200
+              ? Colors.pink.shade200
               : Colors.grey.shade200,
         ),
         boxShadow: [
@@ -3348,7 +3348,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
                       fontWeight:
                           item.isTerlambat ? FontWeight.w700 : FontWeight.w500,
                       color: item.isTerlambat
-                          ? Colors.rose.shade700
+                          ? Colors.pink.shade700
                           : AppColors.textPrimary,
                     ),
                   ),
@@ -3472,7 +3472,7 @@ class _PerpustakaanScreenState extends State<PerpustakaanScreen> {
       child: Column(
         children: [
           Icon(Icons.error_outline_rounded,
-              size: 40, color: Colors.rose.shade400),
+              size: 40, color: Colors.pink.shade400),
           const SizedBox(height: 12),
           Text(
             _pinjamanSiswaError ?? 'Gagal memuat peminjaman siswa',

@@ -873,7 +873,7 @@ class _SpikapDetailScreenState extends State<SpikapDetailScreen> {
                             placeholder: (_, __) => const Center(
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            errorWidget: (_, __) => const Icon(
+                            errorWidget: (_, __, ___) => const Icon(
                               Icons.image_outlined,
                               color: Color(0xFF94A3B8),
                             ),
