@@ -13,12 +13,18 @@
    - Panduan praktis bagi siswa untuk pemindaian barcode di scanner gerbang presensi atau meja sirkulasi perpustakaan.
 
 2. **Kartu Pelajar Digital Interaktif (Flip 2 Sisi / Elegan)**:
+   - **Dimensi Fisik Standar ID-1 / CR80**:
+     - Mengikuti format Blade Laravel (`resources/views/components/kartu-siswa-card.blade.php`), ukuran fisik 54mm × 86mm (rasio portrait ~1 : 1.59, di Flutter diatur `width: 280, height: 445`).
    - **Sisi Depan**:
-     - Kop resmi sekolah (Logo instansi, Nama Sekolah: *SMP Negeri 3 Kedungreja*, badge *KARTU PELAJAR & PRESENSI*).
-     - Foto resmi siswa dengan bingkai rapi (fallback avatar inisial bila foto belum diunggah).
-     - Identitas lengkap: Nama Siswa, NISN, NIS, Kelas, Jenis Kelamin, Tempat & Tanggal Lahir.
+     - Background elegan bertekstur: gradien halus, ornamen watermark bulatan, dan arsiran diagonal halus 45 derajat (`_CardStripesPainter`).
+     - Kop resmi sekolah terpusat (Logo Kabupaten Cilacap, Nama Sekolah: *SMP NEGERI 3 KEDUNGREJA*, badge *KARTU SISWA*).
+     - Bingkai foto siswa (72 × 94 dp) terpusat dengan fallback avatar inisial.
+     - Nama Siswa resmi (huruf kapital tebal, tanpa kelas agar berlaku permanen).
+     - Kotak Username identitas (NISN / NIS) berbingkai dengan ikon gembok dan jarak karakter lebar.
      - **Barcode Code 128 Native**: Dihasilkan secara presisi melalui `BarcodeWidget(barcode: Barcode.code128(), data: barcodeData)` di atas latar putih kontras tinggi sehingga terbaca seketika oleh barcode scanner optik (laser/camera).
      - String angka NISN/barcode di bawah garis barcode dengan font monospaced tebal berjarak.
+     - Label footer domain host (misal: *localhost* / domain server sekolah).
+     - Strip bawah 3 warna gradien (Amber, Biru Muda, Biru Navy tua).
    - **Sisi Belakang (Ketentuan & Pengesahan)**:
      - Tata tertib kepemilikan kartu pelajar.
      - Catatan masa berlaku kartu (selama menjadi peserta didik aktif).
@@ -26,11 +32,16 @@
 
 3. **Mode Scan Layar Penuh (Fullscreen Scan Mode / Kecerahan Tinggi)**:
    - Menampilkan barcode Code-128 berukuran ekstra besar di tengah layar dengan background putih bersih dan kontras maksimal.
-   - Fitur salin kode barcode ke clipboard dengan snackbar interaktif.
+   - Fitur salin kode barcode ke clipboard dengan feedback visual (snackbar).
 
-4. **Fitur Unduh / Cetak Dokumen PDF Resmi**:
-   - **Unduh Kartu Pelajar (PDF)**: Mengunduh atau membuka berkas PDF kartu beresolusi cetak tinggi (*300 DPI layout `pdf.kartu-siswa-download`*) langsung ke galeri/unduhan perangkat siswa.
-   - **Unduh Biodata Siswa (PDF)**: Mengunduh berkas PDF lembar biodata resmi siswa (`pdf.biodata-siswa`).
+4. **Fitur Simpan Gambar Kartu (JPG) & Unduh Biodata**:
+   - **Simpan Gambar Kartu (JPG)**:
+     - Menggunakan `RepaintBoundary` + `toImage(pixelRatio: 3.5)` beresolusi ultra HD (~980 × 1557 px).
+     - Berkas otomatis tersimpan langsung ke folder Download perangkat: `/storage/emulated/0/Download/Kartu_Siswa_<NISN>_<Nama>.jpg`.
+     - Langsung terbaca di Galeri HP tanpa perlu melalui dialog printer HP yang rentan distorsi layout.
+   - **Penghapusan Opsi Unduh PDF Kartu**:
+     - Tombol "Unduh PDF Kartu" sengaja dihilangkan di aplikasi Android karena printer engine sistem sering merusak aspect ratio kartu, digantikan sepenuhnya oleh ekspor JPG berkualitas tinggi.
+   - **Unduh Biodata Siswa**: Mengunduh lembar biodata resmi siswa (`pdf.biodata-siswa`).
 
 ---
 

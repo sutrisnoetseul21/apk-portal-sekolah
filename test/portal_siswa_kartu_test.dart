@@ -63,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verifikasi AppBar
-    expect(find.text('Kartu Pelajar & Cetak PDF'), findsOneWidget);
+    expect(find.text('Kartu Pelajar Digital'), findsOneWidget);
 
     // Verifikasi Badge KARTU SISWA pada ID card terpusat
     expect(find.text('KARTU SISWA'), findsOneWidget);
@@ -76,10 +76,11 @@ void main() {
     // Pastikan label 'Kelas' TIDAK ada pada kartu
     expect(find.textContaining('Kelas:'), findsNothing);
 
-    // Verifikasi Tombol Putar Sisi (Sisi Depan / Sisi Belakang) & Cetak PDF In-App
+    // Verifikasi Tombol Putar Sisi (Sisi Depan / Sisi Belakang) & Simpan Gambar Kartu (JPG)
     expect(find.text('Sisi Depan'), findsOneWidget);
     expect(find.text('Sisi Belakang'), findsOneWidget);
-    expect(find.text('Unduh PDF Kartu'), findsOneWidget);
+    expect(find.text('Simpan Gambar Kartu (JPG)'), findsOneWidget);
+    expect(find.text('Unduh PDF Kartu'), findsNothing);
     expect(find.text('Unduh Biodata'), findsOneWidget);
   });
 }

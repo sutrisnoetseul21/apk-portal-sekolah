@@ -44,11 +44,15 @@ Ketika guru memilih kelas dan tanggal KBM, sistem mengambil daftar siswa aktif d
 2. **Siswa Hadir / Telat di Gerbang**:
    - Default status KBM adalah **`hadir`**.
    - Guru mapel dapat mengubahnya menjadi **`tidak_mengikuti`** jika siswa membolos dari jam pelajaran atau izin ke ruang UKS.
-3. **Siswa Belum Absen di Gerbang (`status_gerbang === 'belum_absen'`)**:
-   - Disediakan tombol cerdas: **`+ Hadirkan (Wajib Telat)`**.
-   - Jika guru menandai siswa ini hadir di kelas:
-     - Sistem backend otomatis membuat/memperbarui data di tabel `attendances` pada tanggal tersebut dengan status **`telat`** (*late_minutes = 1, is_manual_input = true, source = 'jurnal_guru', note = 'Diabsenkan oleh guru mata pelajaran di Jurnal Pembelajaran'*).
-     - Menjamin keadilan data presensi sekolah sehingga siswa yang masuk tanpa scan gerbang tetap tercatat masuk namun berstatus telat.
+3. **Siswa Belum Absen di Gerbang (`status_gerbang === 'belum_absen'`) - Opsi Bebas Guru**:
+   - Disediakan 5 pilihan status kehadiran bebas untuk guru mapel:
+     - 🟢 **Hadir**: Dicatat HADIR di gerbang sekolah & Mengikuti Jam KBM.
+     - 🟠 **Telat**: Dicatat TELAT di gerbang sekolah & Mengikuti Jam KBM.
+     - 🔵 **Izin**: Dicatat IZIN di presensi sekolah & Tidak Mengikuti KBM.
+     - 🟣 **Sakit**: Dicatat SAKIT di presensi sekolah & Tidak Mengikuti KBM.
+     - 🔴 **Alpa**: Dicatat ALPA di presensi sekolah & Tidak Mengikuti KBM.
+     - 🔄 **Reset**: Membatalkan penentuan status manual bila terjadi salah klik.
+   - Memberikan fleksibilitas penuh kepada guru di kelas untuk menentukan status sebenarnya bagi siswa yang belum melakukan scan gerbang pagi.
 4. **Tombol Tindakan Massal**:
    - Tombol **"Tandai Semua Hadir KBM"** untuk mempercepat input guru di awal jam KBM.
 

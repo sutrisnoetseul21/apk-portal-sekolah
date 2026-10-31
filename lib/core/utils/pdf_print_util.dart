@@ -158,7 +158,7 @@ class PdfPrintUtil {
     }
   }
 
-  /// Membagikan atau menyimpan berkas PDF langsung ke aplikasi lain (Drive, WA, dll)
+  /// Membagikan atau menyimpan berkas PDF langsung (Download / Buka PDF Viewer / Drive / WA)
   static Future<void> sharePdf({
     required BuildContext context,
     required String url,
@@ -169,6 +169,57 @@ class PdfPrintUtil {
   }) async {
     final pdfFilename = filename ?? '${title.replaceAll(RegExp(r'[^\w\s\.-]'), '_')}.pdf';
 
+    // Tampilkan loading dialog
+    bool isDialogShowing = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mengunduh PDF...',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
     try {
       final bytes = await fetchPdfBytes(
         url: url,
@@ -176,15 +227,26 @@ class PdfPrintUtil {
         identifier: identifier,
       );
 
+      // Tutup dialog loading
+      if (context.mounted && isDialogShowing) {
+        Navigator.of(context, rootNavigator: true).pop();
+        isDialogShowing = false;
+      }
+
       await Printing.sharePdf(
         bytes: bytes,
         filename: pdfFilename,
       );
     } catch (e) {
+      if (context.mounted && isDialogShowing) {
+        Navigator.of(context, rootNavigator: true).pop();
+        isDialogShowing = false;
+      }
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal membagikan PDF: $e'),
+            content: Text('Gagal mengunduh berkas PDF: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: const Color(0xFFDC2626),
             behavior: SnackBarBehavior.floating,
           ),
@@ -193,3 +255,5 @@ class PdfPrintUtil {
     }
   }
 }
+
+

@@ -373,17 +373,25 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
     return '${days[dt.weekday]}, ${dt.day} ${months[dt.month]} ${dt.year}';
   }
 
-  void _toggleAbsenkanTelat(int index) {
+  void _setManualStatusBelumAbsen(int index, String? status) {
     final item = _students[index];
     if ('${item['status_gerbang']}' != 'belum_absen') return;
 
     HapticFeedback.lightImpact();
-    final current = item['diabsenkan_telat'] == true;
     setState(() {
-      _students[index]['diabsenkan_telat'] = !current;
-      _students[index]['status_jurnal'] = !current
-          ? 'hadir'
-          : 'tidak_mengikuti';
+      _students[index]['manual_status'] = status;
+      if (status == null) {
+        // Reset kembali ke status awal (belum ditentukan)
+        _students[index]['diabsenkan_telat'] = false;
+        _students[index]['status_jurnal'] = 'tidak_mengikuti';
+      } else if (status == 'hadir' || status == 'telat') {
+        _students[index]['diabsenkan_telat'] = (status == 'telat');
+        _students[index]['status_jurnal'] = 'hadir';
+      } else {
+        // status == 'izin' || status == 'sakit' || status == 'alpa'
+        _students[index]['diabsenkan_telat'] = false;
+        _students[index]['status_jurnal'] = 'tidak_mengikuti';
+      }
     });
   }
 
@@ -404,7 +412,11 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
         if (_students[i]['is_locked'] != true) {
           _students[i]['status_jurnal'] = 'hadir';
           if ('${_students[i]['status_gerbang']}' == 'belum_absen') {
-            _students[i]['diabsenkan_telat'] = true;
+            // Default hadir untuk yang belum absen jika ditandai semua hadir
+            if (_students[i]['manual_status'] == null) {
+              _students[i]['manual_status'] = 'hadir';
+            }
+            _students[i]['diabsenkan_telat'] = (_students[i]['manual_status'] == 'telat');
           }
         }
       }
@@ -451,7 +463,8 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
           'student_id': sId,
           'status_gerbang': s['status_gerbang'],
           'status_jurnal': s['status_jurnal'],
-          'diabsenkan_telat': s['diabsenkan_telat'] == true,
+          'status_absen_manual': s['manual_status'], // 'hadir' | 'telat' | 'izin' | 'sakit' | 'alpa'
+          'diabsenkan_telat': s['manual_status'] == 'telat' || (s['diabsenkan_telat'] == true && s['manual_status'] == null),
           'keterangan': noteText,
         };
       }).toList();
@@ -2032,6 +2045,60 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
     );
   }
 
+  Widget _buildManualStatusChip({
+    required String label,
+    required String value,
+    required String? currentValue,
+    required Color activeBg,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = currentValue == value;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? activeBg : const Color(0xFFCBD5E1),
+            width: isSelected ? 1.4 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeBg.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              size: 13,
+              color: isSelected ? Colors.white : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.white : const Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStudentAttendanceItem(
     int realIndex,
     Map<String, dynamic> item,
@@ -2043,7 +2110,8 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
     final statusGerbang = '${item['status_gerbang'] ?? 'belum_absen'}';
     final statusJurnal = '${item['status_jurnal'] ?? 'hadir'}';
     final isLocked = item['is_locked'] == true;
-    final diabsenkanTelat = item['diabsenkan_telat'] == true;
+    final manualStatus = item['manual_status'] as String?;
+    final diabsenkanTelat = item['diabsenkan_telat'] == true || manualStatus == 'telat';
 
     final initials = name.trim().isNotEmpty
         ? name
@@ -2199,84 +2267,215 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
               ),
             )
           else if (statusGerbang == 'belum_absen')
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: InkWell(
-                    onTap: () => _toggleAbsenkanTelat(realIndex),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: diabsenkanTelat
-                            ? const Color(0xFFF59E0B)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: diabsenkanTelat
-                              ? const Color(0xFFD97706)
-                              : const Color(0xFFCBD5E1),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: manualStatus == null
+                    ? const Color(0xFFF8FAFC)
+                    : (manualStatus == 'hadir'
+                        ? const Color(0xFFECFDF5)
+                        : manualStatus == 'telat'
+                            ? const Color(0xFFFFFBEB)
+                            : manualStatus == 'izin'
+                                ? const Color(0xFFEFF6FF)
+                                : manualStatus == 'sakit'
+                                    ? const Color(0xFFF5F3FF)
+                                    : const Color(0xFFFFF1F2)),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: manualStatus == null
+                      ? const Color(0xFFE2E8F0)
+                      : (manualStatus == 'hadir'
+                          ? const Color(0xFFA7F3D0)
+                          : manualStatus == 'telat'
+                              ? const Color(0xFFFDE68A)
+                              : manualStatus == 'izin'
+                                  ? const Color(0xFFBFDBFE)
+                                  : manualStatus == 'sakit'
+                                      ? const Color(0xFFDDD6FE)
+                                      : const Color(0xFFFECDD3)),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'PILIH STATUS KEHADIRAN (BELUM SCAN PAGI):',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.3,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            diabsenkanTelat
-                                ? Icons.check_circle_rounded
-                                : Icons.add_circle_outline_rounded,
-                            size: 16,
-                            color: diabsenkanTelat
-                                ? Colors.white
-                                : const Color(0xFF475569),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            diabsenkanTelat
-                                ? '✓ Diabsenkan Hadir (Wajib Telat)'
-                                : '+ Hadirkan di Kelas (Wajib Telat)',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: diabsenkanTelat
-                                  ? Colors.white
-                                  : const Color(0xFF334155),
+                      if (manualStatus != null)
+                        InkWell(
+                          onTap: () => _setManualStatusBelumAbsen(realIndex, null),
+                          borderRadius: BorderRadius.circular(6),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.refresh_rounded, size: 12, color: Color(0xFF64748B)),
+                                SizedBox(width: 2),
+                                Text(
+                                  'Reset',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (diabsenkanTelat) ...[
-                  const SizedBox(height: 6),
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 13,
-                        color: Color(0xFFB45309),
-                      ),
-                      SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          'Otomatis dicatat TELAT di presensi gerbang sekolah',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF92400E),
-                          ),
                         ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 5 Pilihan Status Bebas untuk Guru
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _buildManualStatusChip(
+                        label: 'Hadir',
+                        value: 'hadir',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFF059669),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'hadir'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Telat',
+                        value: 'telat',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFFD97706),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'telat'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Izin',
+                        value: 'izin',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFF2563EB),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'izin'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Sakit',
+                        value: 'sakit',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFF7C3AED),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'sakit'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Alpa',
+                        value: 'alpa',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFFDC2626),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'alpa'),
                       ),
                     ],
                   ),
+
+                  // Feedback / Catatan Konfirmasi Pilihan
+                  const SizedBox(height: 8),
+                  if (manualStatus == null)
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 13,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Siswa belum memiliki status. Klik salah satu status di atas.',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (manualStatus == 'hadir')
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 13,
+                          color: Color(0xFF059669),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Dicatat HADIR di gerbang & Mengikuti Jam KBM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF047857),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (manualStatus == 'telat')
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_filled_rounded,
+                          size: 13,
+                          color: Color(0xFFD97706),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Dicatat TELAT di gerbang & Mengikuti Jam KBM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.cancel_rounded,
+                          size: 13,
+                          color: manualStatus == 'izin'
+                              ? const Color(0xFF2563EB)
+                              : manualStatus == 'sakit'
+                                  ? const Color(0xFF7C3AED)
+                                  : const Color(0xFFDC2626),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Dicatat ${manualStatus.toUpperCase()} di presensi sekolah & Tidak Mengikuti KBM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: manualStatus == 'izin'
+                                  ? const Color(0xFF1E40AF)
+                                  : manualStatus == 'sakit'
+                                      ? const Color(0xFF5B21B6)
+                                      : const Color(0xFF991B1B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
-              ],
+              ),
             )
           else
             Row(
