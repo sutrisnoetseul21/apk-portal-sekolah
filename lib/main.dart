@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/config/app_config.dart';
 import 'core/constants/app_colors.dart';
 import 'features/auth/screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi locale simbol tanggal bahasa Indonesia
+  await initializeDateFormatting('id_ID', null);
 
   // Konfigurasi Navigasi Sistem Android: Memastikan tombol navigasi bawah
   // (Back, Home, Recent Apps) dan Status Bar atas selalu tampil (Non-Fullscreen).

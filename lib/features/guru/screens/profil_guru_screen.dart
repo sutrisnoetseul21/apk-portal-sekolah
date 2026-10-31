@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/storage/session_storage.dart';
+import '../../../core/utils/image_compress_util.dart';
 import '../../auth/screens/login_screen.dart';
 import '../models/guru_profil_model.dart';
 import '../services/guru_profil_service.dart';
@@ -428,21 +429,20 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
     Navigator.pop(context); // Tutup bottom sheet
 
     try {
-      final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
+      final compressed = await ImageCompressUtil.pickAndCompressImage(
         source: source,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
       );
 
-      if (image == null) return;
+      if (compressed == null) return;
 
       setState(() {
         _isUploadingPhoto = true;
       });
 
-      final result = await _service.uploadPhoto(image.path);
+      final result = await _service.uploadPhoto(compressed.file.path);
 
       if (mounted) {
         setState(() {

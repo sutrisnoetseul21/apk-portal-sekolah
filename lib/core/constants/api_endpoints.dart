@@ -9,7 +9,47 @@ class ApiEndpoints {
   static const String logout = '/auth/logout';
   static const String fcmToken = '/auth/fcm-token';
 
-  // Modul Siswa
+  // Modul Siswa & Pelajar
+  static const String siswaDashboardSummary = '/siswa/dashboard-summary';
+  static const String siswaAkademikDashboard = '/siswa/akademik/dashboard';
+  static const String siswaIjinKehadiran = '/siswa/ijin-kehadiran';
+  static const String siswaIjinCheckHolidays = '/siswa/ijin-kehadiran/check-holidays';
+  static String siswaIjinDetail(String id) => '/siswa/ijin-kehadiran/$id';
+  static String siswaIjinDelete(String id) => '/siswa/ijin-kehadiran/$id';
+  static const String siswaGuruWaliDashboard = '/siswa/guru-wali/dashboard';
+  static const String siswaGuruWaliKonsultasi = '/siswa/guru-wali/konsultasi';
+  static String siswaGuruWaliKonsultasiDetail(String id) => '/siswa/guru-wali/konsultasi/$id';
+  static String siswaGuruWaliKonsultasiPesan(String id) => '/siswa/guru-wali/konsultasi/$id/pesan';
+  static String siswaGuruWaliKonsultasiCancel(String id) => '/siswa/guru-wali/konsultasi/$id';
+  static String siswaGuruWaliKonsultasiFeedback(String id) => '/siswa/guru-wali/konsultasi/$id/feedback';
+  static const String siswaGuruWaliKlasikal = '/siswa/guru-wali/pendampingan-klasikal';
+
+  // Menu 4: SPIKAP Siswa (/siswa/spikap/*)
+  static const String siswaSpikapDashboard = '/siswa/spikap/dashboard';
+  static const String siswaSpikapList = '/siswa/spikap/laporan';
+  static const String siswaSpikapSubmit = '/siswa/spikap/laporan';
+  static String siswaSpikapDetail(int id) => '/siswa/spikap/laporan/$id';
+  static String siswaSpikapLampiran(int id) => '/siswa/spikap/lampiran/$id';
+  static String siswaSpikapDownloadLampiran(int id) => '/siswa/spikap/lampiran/$id/download';
+
+  // Menu 5: Perpustakaan Siswa (/siswa/perpustakaan/*)
+  static const String siswaPerpustakaanSummary = '/siswa/perpustakaan/summary';
+  static const String siswaPerpustakaanPinjamanAktif = '/siswa/perpustakaan/pinjaman-aktif';
+  static const String siswaPerpustakaanRiwayatPinjam = '/siswa/perpustakaan/riwayat-pinjam';
+  static const String siswaPerpustakaanRiwayatKunjungan = '/siswa/perpustakaan/riwayat-kunjungan';
+
+  // Menu 6: Kartu Pelajar Siswa (/siswa/kartu/*)
+  static const String siswaKartuDigitalInfo = '/siswa/kartu/digital-info';
+  static const String siswaKartuDownloadPdf = '/siswa/kartu/download-pdf';
+  static const String siswaKartuBiodataPdf = '/siswa/kartu/biodata-pdf';
+
+  // Menu 7: Profil Saya & Akun Pelajar (/siswa/profil/*)
+  static const String siswaProfilInfo = '/siswa/profil/info';
+  static const String siswaProfilUpdateKontak = '/siswa/profil/update-kontak';
+  static const String siswaProfilUpdateFoto = '/siswa/profil/update-foto';
+  static const String siswaProfilHapusFoto = '/siswa/profil/hapus-foto';
+  static const String siswaProfilUpdatePassword = '/siswa/profil/update-password';
+
   static const String siswaKartu = '/siswa/kartu';
   static const String siswaDashboard = '/siswa/dashboard';
   static const String siswaRiwayat = '/siswa/presensi/riwayat';

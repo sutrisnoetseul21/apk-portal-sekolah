@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Informasi Hak Akses Pengguna ke Modul SPIKAP
 class SpikapAccessInfo {
   final bool canAccess;
