@@ -116,12 +116,16 @@ class SiswaIjinCounts {
   final int pending;
   final int approved;
   final int rejected;
+  final int sakit;
+  final int ijin;
 
   const SiswaIjinCounts({
     required this.total,
     required this.pending,
     required this.approved,
     required this.rejected,
+    this.sakit = 0,
+    this.ijin = 0,
   });
 
   factory SiswaIjinCounts.fromJson(Map<String, dynamic> json) {
@@ -130,6 +134,8 @@ class SiswaIjinCounts {
       pending: json['pending'] is int ? json['pending'] : 0,
       approved: json['approved'] is int ? json['approved'] : 0,
       rejected: json['rejected'] is int ? json['rejected'] : 0,
+      sakit: json['sakit'] is int ? json['sakit'] : 0,
+      ijin: json['ijin'] is int ? json['ijin'] : 0,
     );
   }
 }

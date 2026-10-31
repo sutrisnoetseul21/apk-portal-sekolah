@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:apk_portal_smpn1_sampang/core/utils/pdf_print_util.dart';
 import '../../../models/student_model.dart';
 import '../../../services/data_siswa_service.dart';
 import 'dialog_ganti_password.dart';
@@ -234,7 +235,12 @@ class StudentCardWidget extends StatelessWidget {
                 onTap: () {
                   Navigator.of(ctx).pop();
                   final url = service.getCetakBiodataUrl(student.id);
-                  _launchUrl(context, url);
+                  PdfPrintUtil.printOrSavePdf(
+                    context: context,
+                    url: url,
+                    title: 'Biodata Siswa - ${student.nama}',
+                    identifier: service.identifier,
+                  );
                 },
               ),
 

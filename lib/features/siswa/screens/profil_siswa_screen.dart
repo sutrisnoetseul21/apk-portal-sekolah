@@ -1273,35 +1273,71 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
 
             const SizedBox(height: 16),
 
-            // Nomor HP Orang Tua / Wali
-            Text(
-              'Nomor HP Orang Tua / Wali',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF334155),
-              ),
+            // Nomor HP Orang Tua / Wali (Read-Only / Disabled untuk Siswa)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Nomor HP Orang Tua / Wali',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock_rounded, size: 10, color: Color(0xFF64748B)),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Wali Kelas',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             TextFormField(
               controller: _noHpOrangTuaController,
-              keyboardType: TextInputType.phone,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
+              readOnly: true,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF64748B)),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.contact_phone_outlined, size: 20, color: Color(0xFF64748B)),
-                hintText: 'Nomor telepon ayah/ibu/wali',
+                prefixIcon: const Icon(Icons.contact_phone_outlined, size: 20, color: Color(0xFF94A3B8)),
+                suffixIcon: const Tooltip(
+                  message: 'Hanya dapat diubah oleh Wali Kelas / Admin',
+                  child: Icon(Icons.lock_outline_rounded, size: 18, color: Color(0xFF94A3B8)),
+                ),
+                hintText: 'Belum diisi oleh wali kelas',
                 hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
-                focusedBorder: OutlineInputBorder(
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF0284C7), width: 1.5),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: const Color(0xFFF1F5F9),
+                helperText: 'Nomor HP orang tua diinput & diperbarui oleh Wali Kelas / Admin Sekolah',
+                helperStyle: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF64748B)),
+                helperMaxLines: 2,
               ),
             ),
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../core/utils/pdf_print_util.dart';
 import '../models/data_siswa_filter_model.dart';
 import '../models/student_model.dart';
 import '../services/data_siswa_service.dart';
@@ -187,23 +187,13 @@ class _DataSiswaScreenState extends State<DataSiswaScreen> {
     });
   }
 
-  Future<void> _launchExternalUrl(String url) async {
-    final uri = Uri.parse(url);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        await launchUrl(uri);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal mengunduh berkas: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  Future<void> _printOrSavePdf(String url, String title) async {
+    await PdfPrintUtil.printOrSavePdf(
+      context: context,
+      url: url,
+      title: title,
+      identifier: _service.identifier,
+    );
   }
 
   void _showBatchPrintDialog() {
@@ -279,7 +269,7 @@ class _DataSiswaScreenState extends State<DataSiswaScreen> {
                       _selectedClassId!,
                       _selectedAcademicYearId!,
                     );
-                    _launchExternalUrl(url);
+                    _printOrSavePdf(url, 'Kartu Siswa - $currentClassName');
                   },
                 ),
 
@@ -312,7 +302,7 @@ class _DataSiswaScreenState extends State<DataSiswaScreen> {
                       _selectedClassId!,
                       _selectedAcademicYearId!,
                     );
-                    _launchExternalUrl(url);
+                    _printOrSavePdf(url, 'Biodata Siswa - $currentClassName');
                   },
                 ),
                 const SizedBox(height: 8),

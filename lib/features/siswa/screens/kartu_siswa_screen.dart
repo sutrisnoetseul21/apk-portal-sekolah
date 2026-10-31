@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../core/utils/pdf_print_util.dart';
 import '../models/siswa_kartu_model.dart';
 import '../services/siswa_kartu_service.dart';
 
@@ -13,6 +13,7 @@ class KartuSiswaScreen extends StatefulWidget {
   final String studentName;
   final String schoolName;
   final String? token;
+  final SiswaKartuService? service;
 
   const KartuSiswaScreen({
     super.key,
@@ -20,6 +21,7 @@ class KartuSiswaScreen extends StatefulWidget {
     required this.studentName,
     this.schoolName = 'SMP Negeri 3 Kedungreja',
     this.token,
+    this.service,
   });
 
   @override
@@ -37,10 +39,11 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
   @override
   void initState() {
     super.initState();
-    _service = SiswaKartuService.create(
-      token: widget.token,
-      identifier: widget.identifier,
-    );
+    _service = widget.service ??
+        SiswaKartuService.create(
+          token: widget.token,
+          identifier: widget.identifier,
+        );
     _loadDigitalInfo();
   }
 
@@ -69,24 +72,13 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
   }
 
   Future<void> _openPdf(String urlString, String title) async {
-    final uri = Uri.parse(urlString);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        await launchUrl(uri);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal membuka berkas $title: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+    await PdfPrintUtil.printOrSavePdf(
+      context: context,
+      url: urlString,
+      title: title,
+      token: widget.token,
+      identifier: widget.identifier,
+    );
   }
 
   Future<void> _copyBarcode(String code) async {
@@ -252,7 +244,9 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'NISN: ${info.nisn} • Kelas: ${info.className}',
+                info.nis != '-' && info.nis.isNotEmpty
+                    ? 'NISN: ${info.nisn} • NIS: ${info.nis}'
+                    : 'NISN: ${info.nisn}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -592,100 +586,117 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Semantics(
-              button: true,
-              label: 'Tampilkan sisi depan kartu pelajar',
-              selected: !_isBackSide,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (_isBackSide) {
-                    setState(() => _isBackSide = false);
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: !_isBackSide ? Colors.white : Colors.transparent,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: !_isBackSide
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.credit_card_rounded,
-                        size: 18,
-                        color: !_isBackSide ? const Color(0xFF4338CA) : const Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Sisi Depan',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: !_isBackSide ? FontWeight.w800 : FontWeight.w600,
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: 'Tampilkan sisi depan kartu pelajar',
+                selected: !_isBackSide,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (_isBackSide) {
+                      setState(() => _isBackSide = false);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: !_isBackSide ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: !_isBackSide
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.credit_card_rounded,
+                          size: 18,
                           color: !_isBackSide ? const Color(0xFF4338CA) : const Color(0xFF64748B),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Sisi Depan',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: !_isBackSide ? FontWeight.w800 : FontWeight.w600,
+                              color: !_isBackSide ? const Color(0xFF4338CA) : const Color(0xFF64748B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-            Semantics(
-              button: true,
-              label: 'Tampilkan sisi belakang ketentuan kartu pelajar',
-              selected: _isBackSide,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (!_isBackSide) {
-                    setState(() => _isBackSide = true);
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _isBackSide ? Colors.white : Colors.transparent,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: _isBackSide
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.flip_to_back_rounded,
-                        size: 18,
-                        color: _isBackSide ? const Color(0xFF4338CA) : const Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Sisi Belakang',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: _isBackSide ? FontWeight.w800 : FontWeight.w600,
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: 'Tampilkan sisi belakang ketentuan kartu pelajar',
+                selected: _isBackSide,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (!_isBackSide) {
+                      setState(() => _isBackSide = true);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _isBackSide ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: _isBackSide
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.flip_to_back_rounded,
+                          size: 18,
                           color: _isBackSide ? const Color(0xFF4338CA) : const Color(0xFF64748B),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Sisi Belakang',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: _isBackSide ? FontWeight.w800 : FontWeight.w600,
+                              color: _isBackSide ? const Color(0xFF4338CA) : const Color(0xFF64748B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -712,250 +723,312 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
     );
   }
 
-  /// Sisi Depan Kartu Pelajar (Identitas, Foto, & Barcode Code-128)
+  /// Sisi Depan Kartu Pelajar (Identitas Terpusat, Foto, & Barcode Code-128 Selaras Web Blade)
   Widget _buildCardFront(SiswaKartuDigitalInfo info, {Key? key}) {
-    return Container(
-      key: key,
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 420),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1E3A8A), // Navy Blue
-            Color(0xFF2563EB), // Royal Blue
-            Color(0xFF1D4ED8), // Classic Blue
+    final identifierLabel = info.scanMode == 'nis' ? 'NIS' : 'NISN';
+    final identifierValue = info.scanMode == 'nis' ? info.nis : info.nisn;
+
+    return Center(
+      child: Container(
+        key: key,
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 320),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E293B).withValues(alpha: 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E3A8A).withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Background Circular Watermarks
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Dekorasi Background Arc (Kanan Atas & Kiri Bawah)
+            Positioned(
+              right: -25,
+              top: -25,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFE8F2FF),
+                ),
               ),
             ),
-          ),
-          Positioned(
-            left: -35,
-            bottom: -35,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.04),
+            Positioned(
+              left: -20,
+              bottom: -20,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFFFF4E0),
+                ),
               ),
             ),
-          ),
 
-          // Konten Depan
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
+            // Konten Utama
+            Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // KOP KARTU
+                // 1. Strip Atas (Dual Color: Biru Tua 2/3 + Amber 1/3)
                 Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        padding: const EdgeInsets.all(4),
-                        color: Colors.white.withValues(alpha: 0.15),
-                        child: info.schoolLogoUrl != null && info.schoolLogoUrl!.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: info.schoolLogoUrl!,
-                                fit: BoxFit.contain,
-                                placeholder: (context, url) => const Icon(
-                                  Icons.school_rounded,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                                errorWidget: (context, url, error) => const Icon(
-                                  Icons.school_rounded,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.school_rounded,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            info.schoolName.toUpperCase(),
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'KARTU PELAJAR & PRESENSI',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: const Color(0xFFFCD34D), // Amber gold
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
+                      flex: 2,
+                      child: Container(height: 4, color: const Color(0xFF1E3A8A)),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        info.className,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    Expanded(
+                      flex: 1,
+                      child: Container(height: 4, color: const Color(0xFFF59E0B)),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 16),
-                Divider(color: Colors.white.withValues(alpha: 0.18), height: 1),
-                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // 2. Kop Logo & Nama Sekolah
+                      if (info.schoolLogoUrl != null && info.schoolLogoUrl!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: CachedNetworkImage(
+                            imageUrl: info.schoolLogoUrl!,
+                            height: 34,
+                            fit: BoxFit.contain,
+                            placeholder: (context, url) => const Icon(
+                              Icons.school_rounded,
+                              color: Color(0xFF1E3A8A),
+                              size: 28,
+                            ),
+                            errorWidget: (context, url, error) => const Icon(
+                              Icons.school_rounded,
+                              color: Color(0xFF1E3A8A),
+                              size: 28,
+                            ),
+                          ),
+                        )
+                      else
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 4),
+                          child: Icon(
+                            Icons.school_rounded,
+                            color: Color(0xFF1E3A8A),
+                            size: 28,
+                          ),
+                        ),
 
-                // FOTO & DATA IDENTITAS
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Bingkai Foto Profil
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
+                      Text(
+                        info.schoolName.toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1E3A8A),
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Badge KARTU SISWA
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFCD34D), width: 0.8),
+                        ),
+                        child: Text(
+                          'KARTU SISWA',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFD97706),
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // 3. Bingkai Foto Siswa Terpusat
+                      Container(
                         width: 78,
                         height: 98,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white, width: 2.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1E3A8A).withValues(alpha: 0.18),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
+                        clipBehavior: Clip.antiAlias,
                         child: (info.photoUrl != null && info.photoUrl!.isNotEmpty)
                             ? CachedNetworkImage(
                                 imageUrl: info.photoUrl!,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => _buildAvatarFallback(info.name),
+                                placeholder: (context, url) => Container(
+                                  color: const Color(0xFFF1F5F9),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
                                 errorWidget: (context, url, error) => _buildAvatarFallback(info.name),
                               )
                             : _buildAvatarFallback(info.name),
                       ),
-                    ),
-                    const SizedBox(width: 16),
 
-                    // Data Diri Siswa
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            info.name.toUpperCase(),
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildCardRow('NISN', info.nisn),
-                          _buildCardRow('NIS', info.nis),
-                          _buildCardRow('JK', '${info.genderLabel} (${info.gender})'),
-                          if (info.birthInfo.isNotEmpty && info.birthInfo != '-')
-                            _buildCardRow('TTL', info.birthInfo),
-                        ],
+                      const SizedBox(height: 10),
+
+                      // 4. Nama Siswa (Tanpa Kelas agar Berlaku Permanen)
+                      Text(
+                        info.name.toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF1E3A8A),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
+
+                      const SizedBox(height: 10),
+
+                      // 5. Kotak Username (NISN / NIS)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBFDBFE), width: 0.9),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 10,
+                                  color: Color(0xFF3B82F6),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'USERNAME ($identifierLabel)',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF3B82F6),
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              identifierValue,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF1E3A8A),
+                                letterSpacing: 1.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // 6. Barcode Code-128
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Column(
+                          children: [
+                            Semantics(
+                              label: 'Barcode presensi Code 128 dengan kode ${info.barcodeCode}',
+                              child: BarcodeWidget(
+                                barcode: Barcode.code128(),
+                                data: info.barcodeCode,
+                                height: 38,
+                                width: double.infinity,
+                                drawText: false,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              info.barcodeCode,
+                              style: GoogleFonts.robotoMono(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.5,
+                                color: const Color(0xFF334155),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // 7. Footer Tagline / Alamat Sekolah
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          info.schoolAddress.isNotEmpty && info.schoolAddress != '-'
+                              ? info.schoolAddress
+                              : 'SMP Negeri 3 Kedungreja',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 7.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 8. Strip Bawah (Dual Color: Amber 1/3 + Biru Tua 2/3)
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: Container(height: 4, color: const Color(0xFFF59E0B)),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Container(height: 4, color: const Color(0xFF1E3A8A)),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 18),
-
-                // BARCODE NATIVE CODE-128
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Semantics(
-                        label: 'Barcode presensi Code 128 dengan kode ${info.barcodeCode}',
-                        child: BarcodeWidget(
-                          barcode: Barcode.code128(),
-                          data: info.barcodeCode,
-                          height: 52,
-                          width: double.infinity,
-                          drawText: false,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        info.barcodeCode,
-                        style: GoogleFonts.robotoMono(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 2.5,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1129,44 +1202,7 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
     );
   }
 
-  /// Baris Data Identitas pada Kartu
-  Widget _buildCardRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 44,
-            child: Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                color: Colors.white70,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const Text(
-            ': ',
-            style: TextStyle(color: Colors.white70, fontSize: 11),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.plusJakartaSans(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   /// Fallback Avatar Inisial
   Widget _buildAvatarFallback(String name) {
@@ -1337,12 +1373,14 @@ class _KartuSiswaScreenState extends State<KartuSiswaScreen> {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              Text(
-                'Tips Pemindaian Barcode',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF312E81),
+              Expanded(
+                child: Text(
+                  'Tips Pemindaian Barcode',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF312E81),
+                  ),
                 ),
               ),
             ],

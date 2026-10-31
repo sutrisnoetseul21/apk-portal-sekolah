@@ -683,15 +683,12 @@ class _IjinKehadiranSiswaScreenState extends State<IjinKehadiranSiswaScreen> {
                   color: AppColors.primary,
                   child: Column(
                     children: [
-                      // 1. Ringkasan Metrik Singkat (Interactive)
+                      // 1. Ringkasan Metrik 6 Kotak (Interactive Filter)
                       _buildSummaryMetrics(),
 
-                      // 2. Filter Bar (Status & Kategori)
-                      _buildFilterHeader(),
+                      const SizedBox(height: 8),
 
-                      const SizedBox(height: 4),
-
-                      // 3. Konten List Riwayat
+                      // 2. Konten List Riwayat
                       Expanded(
                         child: _data!.items.isEmpty
                             ? _buildEmptyView()
@@ -739,57 +736,138 @@ class _IjinKehadiranSiswaScreenState extends State<IjinKehadiranSiswaScreen> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: _buildMetricItem(
-              title: 'Total Izin',
-              count: counts?.total ?? 0,
-              icon: Icons.assignment_outlined,
-              color: const Color(0xFF2563EB),
-              bg: const Color(0xFFEFF6FF),
-              onTap: () {
-                if (_selectedStatus != 'all') {
-                  setState(() => _selectedStatus = 'all');
-                  _loadData();
-                }
-              },
-              isActive: _selectedStatus == 'all',
-            ),
+          // Baris 1: Status Utama (3 kotak: Total, Menunggu, Disetujui)
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  title: 'Total Izin',
+                  count: counts?.total ?? 0,
+                  icon: Icons.assignment_outlined,
+                  color: const Color(0xFF2563EB),
+                  bg: const Color(0xFFEFF6FF),
+                  isSelected: _selectedStatus == 'all' && _selectedType == 'all',
+                  onTap: () {
+                    if (_selectedStatus != 'all' || _selectedType != 'all') {
+                      setState(() {
+                        _selectedStatus = 'all';
+                        _selectedType = 'all';
+                      });
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricItem(
+                  title: 'Menunggu',
+                  count: counts?.pending ?? 0,
+                  icon: Icons.hourglass_top_rounded,
+                  color: const Color(0xFFD97706),
+                  bg: const Color(0xFFFFFBEB),
+                  isSelected: _selectedStatus == 'pending' && _selectedType == 'all',
+                  onTap: () {
+                    if (_selectedStatus != 'pending' || _selectedType != 'all') {
+                      setState(() {
+                        _selectedStatus = 'pending';
+                        _selectedType = 'all';
+                      });
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricItem(
+                  title: 'Disetujui',
+                  count: counts?.approved ?? 0,
+                  icon: Icons.check_circle_outline_rounded,
+                  color: const Color(0xFF059669),
+                  bg: const Color(0xFFECFDF5),
+                  isSelected: _selectedStatus == 'approved' && _selectedType == 'all',
+                  onTap: () {
+                    if (_selectedStatus != 'approved' || _selectedType != 'all') {
+                      setState(() {
+                        _selectedStatus = 'approved';
+                        _selectedType = 'all';
+                      });
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildMetricItem(
-              title: 'Menunggu',
-              count: counts?.pending ?? 0,
-              icon: Icons.hourglass_top_rounded,
-              color: const Color(0xFFD97706),
-              bg: const Color(0xFFFFFBEB),
-              onTap: () {
-                if (_selectedStatus != 'pending') {
-                  setState(() => _selectedStatus = 'pending');
-                  _loadData();
-                }
-              },
-              isActive: _selectedStatus == 'pending',
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildMetricItem(
-              title: 'Disetujui',
-              count: counts?.approved ?? 0,
-              icon: Icons.check_circle_outline_rounded,
-              color: const Color(0xFF059669),
-              bg: const Color(0xFFECFDF5),
-              onTap: () {
-                if (_selectedStatus != 'approved') {
-                  setState(() => _selectedStatus = 'approved');
-                  _loadData();
-                }
-              },
-              isActive: _selectedStatus == 'approved',
-            ),
+
+          const SizedBox(height: 8),
+
+          // Baris 2: Ditolak & Kategori (3 kotak: Ditolak, Sakit, Izin)
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  title: 'Ditolak',
+                  count: counts?.rejected ?? 0,
+                  icon: Icons.cancel_outlined,
+                  color: const Color(0xFFDC2626),
+                  bg: const Color(0xFFFEF2F2),
+                  isSelected: _selectedStatus == 'rejected' && _selectedType == 'all',
+                  onTap: () {
+                    if (_selectedStatus != 'rejected' || _selectedType != 'all') {
+                      setState(() {
+                        _selectedStatus = 'rejected';
+                        _selectedType = 'all';
+                      });
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricItem(
+                  title: 'Sakit',
+                  count: counts?.sakit ?? 0,
+                  icon: Icons.medical_services_outlined,
+                  color: const Color(0xFF0284C7),
+                  bg: const Color(0xFFF0F9FF),
+                  isSelected: _selectedType == 'sakit',
+                  onTap: () {
+                    if (_selectedType != 'sakit') {
+                      setState(() {
+                        _selectedStatus = 'all';
+                        _selectedType = 'sakit';
+                      });
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricItem(
+                  title: 'Izin',
+                  count: counts?.ijin ?? 0,
+                  icon: Icons.mail_outline_rounded,
+                  color: const Color(0xFF7C3AED),
+                  bg: const Color(0xFFF5F3FF),
+                  isSelected: _selectedType == 'ijin',
+                  onTap: () {
+                    if (_selectedType != 'ijin') {
+                      setState(() {
+                        _selectedStatus = 'all';
+                        _selectedType = 'ijin';
+                      });
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -802,264 +880,71 @@ class _IjinKehadiranSiswaScreenState extends State<IjinKehadiranSiswaScreen> {
     required IconData icon,
     required Color color,
     required Color bg,
+    required bool isSelected,
     required VoidCallback onTap,
-    required bool isActive,
   }) {
-    return InkWell(
+    return Material(
+      color: isSelected ? bg.withValues(alpha: 0.5) : Colors.white,
       borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
-        decoration: BoxDecoration(
-          color: isActive ? bg : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isActive ? color : const Color(0xFFE2E8F0),
-            width: isActive ? 1.5 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isActive ? color.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? bg.withValues(alpha: 0.4) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? color : const Color(0xFFE2E8F0),
+              width: isSelected ? 2 : 1,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected ? color.withValues(alpha: 0.14) : const Color(0xFF1E293B).withValues(alpha: 0.03),
+                blurRadius: isSelected ? 6 : 3,
+                offset: const Offset(0, 2),
               ),
-              child: Icon(icon, color: color, size: 15),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: isActive ? color : AppColors.textSecondary,
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(7),
                     ),
+                    child: Icon(icon, size: 14, color: color),
                   ),
                   Text(
                     '$count',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: isActive ? color : AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                      color: color,
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterHeader() {
-    final counts = _data?.counts;
-
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Column(
-        children: [
-          // Row 1: Status Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildStatusFilterChip(
-                  key: 'all',
-                  label: 'Semua Status',
-                  count: counts?.total ?? 0,
-                  icon: Icons.list_alt_rounded,
+              const SizedBox(height: 6),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? color : AppColors.textSecondary,
                 ),
-                const SizedBox(width: 8),
-                _buildStatusFilterChip(
-                  key: 'pending',
-                  label: 'Menunggu',
-                  count: counts?.pending ?? 0,
-                  activeColor: const Color(0xFFD97706),
-                  icon: Icons.hourglass_empty_rounded,
-                ),
-                const SizedBox(width: 8),
-                _buildStatusFilterChip(
-                  key: 'approved',
-                  label: 'Disetujui',
-                  count: counts?.approved ?? 0,
-                  activeColor: const Color(0xFF059669),
-                  icon: Icons.check_circle_outline_rounded,
-                ),
-                const SizedBox(width: 8),
-                _buildStatusFilterChip(
-                  key: 'rejected',
-                  label: 'Ditolak',
-                  count: counts?.rejected ?? 0,
-                  activeColor: const Color(0xFFDC2626),
-                  icon: Icons.cancel_outlined,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Row 2: Tipe Chips (Semua, Sakit, Izin)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildTypeFilterChip(
-                  key: 'all',
-                  label: 'Semua Kategori',
-                  icon: Icons.category_outlined,
-                ),
-                const SizedBox(width: 8),
-                _buildTypeFilterChip(
-                  key: 'sakit',
-                  label: 'Hanya Sakit',
-                  activeColor: const Color(0xFF2563EB),
-                  icon: Icons.medical_services_outlined,
-                ),
-                const SizedBox(width: 8),
-                _buildTypeFilterChip(
-                  key: 'ijin',
-                  label: 'Hanya Izin',
-                  activeColor: const Color(0xFF7C3AED),
-                  icon: Icons.mail_outline_rounded,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeFilterChip({
-    required String key,
-    required String label,
-    Color activeColor = const Color(0xFF2563EB),
-    IconData? icon,
-  }) {
-    final isSelected = _selectedType == key;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        if (!isSelected) {
-          setState(() {
-            _selectedType = key;
-          });
-          _loadData();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? activeColor : const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: activeColor.withValues(alpha: 0.25),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
               ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 13, color: isSelected ? Colors.white : const Color(0xFF64748B)),
-              const SizedBox(width: 5),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : const Color(0xFF475569),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusFilterChip({
-    required String key,
-    required String label,
-    required int count,
-    Color activeColor = const Color(0xFF2563EB),
-    IconData? icon,
-  }) {
-    final isSelected = _selectedStatus == key;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () {
-        if (!isSelected) {
-          setState(() {
-            _selectedStatus = key;
-          });
-          _loadData();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? activeColor : const Color(0xFFE2E8F0),
-            width: 1,
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: activeColor.withValues(alpha: 0.25),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: isSelected ? Colors.white : const Color(0xFF64748B)),
-              const SizedBox(width: 5),
-            ],
-            Text(
-              '$label ($count)',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : const Color(0xFF334155),
-              ),
-            ),
-          ],
         ),
       ),
     );

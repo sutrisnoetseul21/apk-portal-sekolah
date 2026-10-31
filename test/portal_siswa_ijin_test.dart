@@ -81,7 +81,14 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(412, 924));
 
     final mockResponse = SiswaIjinListResponse(
-      counts: const SiswaIjinCounts(total: 2, pending: 1, approved: 1, rejected: 0),
+      counts: const SiswaIjinCounts(
+        total: 2,
+        pending: 1,
+        approved: 1,
+        rejected: 0,
+        sakit: 1,
+        ijin: 1,
+      ),
       items: const [
         SiswaIjinItem(
           id: 'ijin-001',
@@ -156,10 +163,13 @@ void main() {
 
     await tester.pump();
 
-    // Verifikasi Filter Chips dengan counter
-    expect(find.text('Semua Status (2)'), findsOneWidget);
-    expect(find.text('Menunggu (1)'), findsOneWidget);
-    expect(find.text('Disetujui (1)'), findsOneWidget);
+    // Verifikasi 6 Kotak Metrik Interaktif (2 baris x 3 kolom seperti Guru Wali)
+    expect(find.text('Total Izin'), findsOneWidget);
+    expect(find.text('Menunggu'), findsOneWidget);
+    expect(find.text('Disetujui'), findsWidgets);
+    expect(find.text('Ditolak'), findsOneWidget);
+    expect(find.text('Sakit'), findsWidgets);
+    expect(find.text('Izin'), findsWidgets);
 
     // Verifikasi Item 1 (Sakit)
     expect(find.text('Demam tinggi dan istirahat dokter'), findsOneWidget);

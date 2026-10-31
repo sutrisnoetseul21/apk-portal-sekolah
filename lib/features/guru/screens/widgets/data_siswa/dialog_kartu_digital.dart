@@ -1,7 +1,7 @@
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:apk_portal_smpn1_sampang/core/utils/pdf_print_util.dart';
 import '../../../models/student_model.dart';
 import '../../../services/data_siswa_service.dart';
 
@@ -38,24 +38,13 @@ class DialogKartuDigitalSiswa extends StatelessWidget {
     );
   }
 
-  Future<void> _openUrl(BuildContext context, String urlString) async {
-    final uri = Uri.parse(urlString);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        await launchUrl(uri);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal membuka berkas: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+  Future<void> _openPdf(BuildContext context, String urlString, String title) async {
+    await PdfPrintUtil.printOrSavePdf(
+      context: context,
+      url: urlString,
+      title: title,
+      identifier: service.identifier,
+    );
   }
 
   @override
@@ -167,22 +156,6 @@ class DialogKartuDigitalSiswa extends StatelessWidget {
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                className,
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
                               ),
                             ),
                           ],
@@ -324,7 +297,7 @@ class DialogKartuDigitalSiswa extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: () {
                             final url = service.getCetakKartuUrl(student.id);
-                            _openUrl(context, url);
+                            _openPdf(context, url, 'Kartu Siswa - ${student.nama}');
                           },
                           icon: const Icon(Icons.print_rounded, size: 18),
                           label: Text(
@@ -352,7 +325,7 @@ class DialogKartuDigitalSiswa extends StatelessWidget {
                         child: OutlinedButton.icon(
                           onPressed: () {
                             final url = service.getCetakBiodataUrl(student.id);
-                            _openUrl(context, url);
+                            _openPdf(context, url, 'Biodata Siswa - ${student.nama}');
                           },
                           icon: const Icon(Icons.picture_as_pdf_rounded,
                               size: 18, color: Color(0xFFDC2626)),
