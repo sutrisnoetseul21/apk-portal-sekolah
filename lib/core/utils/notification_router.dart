@@ -4,6 +4,7 @@ import '../storage/session_storage.dart';
 import '../../features/guru/screens/ijin_kehadiran_screen.dart';
 import '../../features/guru/screens/spikap_screen.dart';
 import '../../features/guru/screens/guru_wali_screen.dart';
+import '../../features/guru/screens/jurnal_mengajar_screen.dart';
 import '../../features/siswa/screens/presensi_siswa_screen.dart';
 import '../../features/siswa/screens/ijin_kehadiran_siswa_screen.dart';
 import '../../features/siswa/screens/spikap_siswa_screen.dart';
@@ -112,6 +113,22 @@ class NotificationRouter {
             studentName: session.name,
             identifier: session.identifier,
             schoolName: session.schoolName,
+          );
+        }
+        break;
+
+      case 'jurnal_tidak_mengikuti':
+        if (isGuru) {
+          targetScreen = JurnalMengajarScreen(
+            token: session.token,
+            teacherName: session.name,
+            schoolName: session.schoolName,
+          );
+        } else {
+          targetScreen = PresensiSiswaScreen(
+            studentName: session.name,
+            identifier: session.identifier,
+            token: session.token,
           );
         }
         break;

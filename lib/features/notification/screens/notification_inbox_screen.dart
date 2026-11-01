@@ -129,6 +129,8 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
         return Colors.amber.shade100;
       case 'consultation':
         return Colors.purple.shade100;
+      case 'jurnal_tidak_mengikuti':
+        return Colors.red.shade100;
       default:
         return Colors.blue.shade100;
     }
@@ -145,6 +147,8 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
         return Icons.shield_outlined;
       case 'consultation':
         return Icons.chat_bubble_outline;
+      case 'jurnal_tidak_mengikuti':
+        return Icons.warning_amber_rounded;
       default:
         return Icons.notifications;
     }
@@ -161,6 +165,8 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
         return Colors.amber.shade900;
       case 'consultation':
         return Colors.purple.shade800;
+      case 'jurnal_tidak_mengikuti':
+        return Colors.red.shade800;
       default:
         return AppColors.primary;
     }
