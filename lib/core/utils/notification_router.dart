@@ -46,6 +46,10 @@ class NotificationRouter {
         );
         break;
 
+      case 'broadcast_school':
+        targetScreen = const NotificationInboxScreen();
+        break;
+
       case 'leave_approval':
         if (isGuru) {
           targetScreen = IjinKehadiranScreen(
