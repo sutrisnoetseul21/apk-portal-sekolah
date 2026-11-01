@@ -12,7 +12,7 @@ class AppConfig {
   /// Nama Aplikasi yang ditampilkan di UI
   static const String appName = String.fromEnvironment(
     'APP_NAME',
-    defaultValue: 'SMP Negeri 3 Kedungreja',
+    defaultValue: 'Portal Coba Hafla',
   );
 
   /// Kode Unik / NPSN Sekolah

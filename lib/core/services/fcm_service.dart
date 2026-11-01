@@ -18,6 +18,40 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (kDebugMode) {
     debugPrint("FCM Background Message Received: ${message.messageId}");
   }
+
+  // Jika payload data-only (tanpa notification block bawaan FCM), tampilkan notifikasi secara manual
+  if (message.notification == null && message.data.isNotEmpty) {
+    final title = message.data['title']?.toString();
+    final body = message.data['body']?.toString();
+    if (title != null && title.isNotEmpty) {
+      final localNotifications = FlutterLocalNotificationsPlugin();
+      const initSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initSettings = InitializationSettings(android: initSettingsAndroid);
+      await localNotifications.initialize(initSettings);
+
+      await localNotifications.show(
+        message.messageId.hashCode != 0
+            ? message.messageId.hashCode
+            : DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'Notifikasi Utama Sekolah',
+            channelDescription:
+                'Saluran notifikasi penting untuk presensi, izin siswa, dan informasi sekolah.',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+        payload: jsonEncode(message.data),
+      );
+    }
+  }
 }
 
 /// Service Utama Manajemen Notifikasi Push Firebase Cloud Messaging (HTTP v1)
@@ -119,25 +153,37 @@ class FcmService {
 
     // 3. Foreground Message Presentation: Tampilkan Heads-Up Notification Lokal
     try {
+      await _fcm?.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         if (kDebugMode) {
           debugPrint("FcmService: Foreground message received: ${message.notification?.title}");
         }
 
         final notification = message.notification;
-        if (notification != null) {
+        final title = notification?.title ?? message.data['title']?.toString();
+        final body = notification?.body ?? message.data['body']?.toString();
+
+        if (title != null && title.isNotEmpty) {
           _localNotifications.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
+            message.messageId.hashCode != 0
+                ? message.messageId.hashCode
+                : DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title,
+            body,
             const NotificationDetails(
               android: AndroidNotificationDetails(
                 _channelId,
                 _channelName,
                 channelDescription: _channelDescription,
-                importance: Importance.high,
+                importance: Importance.max,
                 priority: Priority.high,
                 playSound: true,
+                enableVibration: true,
                 icon: '@mipmap/ic_launcher',
               ),
             ),

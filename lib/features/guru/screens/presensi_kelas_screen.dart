@@ -2976,6 +2976,11 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                       icon: Icons.access_time_rounded,
                                       onTap: () => setModalState(() {
                                         curStatus = 'telat';
+                                        if (lateCtrl.text.isEmpty || lateCtrl.text == '0') {
+                                          if (lateMinutes > 0) {
+                                            lateCtrl.text = '$lateMinutes';
+                                          }
+                                        }
                                       }),
                                     ),
                                     _buildSingleStatusChoice(
@@ -3050,6 +3055,7 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                       SizedBox(
                                         width: 90,
                                         child: TextField(
+                                          key: const ValueKey('single_student_late_input'),
                                           controller: lateCtrl,
                                           keyboardType: TextInputType.number,
                                           style: const TextStyle(
@@ -3072,7 +3078,7 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                             ),
                                           ),
                                           onChanged: (v) {
-                                            lateMinutes = int.tryParse(v) ?? 0;
+                                            lateMinutes = int.tryParse(v.trim()) ?? 0;
                                           },
                                         ),
                                       ),
@@ -3369,6 +3375,23 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
     String bulkDatang = '';
     String bulkPulang = '';
 
+    final Map<String, TextEditingController> lateControllers = {};
+
+    void syncControllers(List<Map<String, dynamic>> list) {
+      for (var s in list) {
+        final sId = s['id']?.toString() ?? '';
+        final minutes = (s['late_minutes'] as num?)?.toInt() ?? 0;
+        if (!lateControllers.containsKey(sId)) {
+          lateControllers[sId] = TextEditingController(text: '$minutes');
+        } else {
+          final curVal = int.tryParse(lateControllers[sId]!.text.trim()) ?? 0;
+          if (curVal != minutes && minutes > 0) {
+            lateControllers[sId]!.text = '$minutes';
+          }
+        }
+      }
+    }
+
     List<Map<String, dynamic>> inputList = _students.map((s) {
       final today = Map<String, dynamic>.from(s['today'] ?? {});
       final st = today['status']?.toString() ?? '';
@@ -3381,6 +3404,8 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
         'is_locked': false,
       };
     }).toList();
+
+    syncControllers(inputList);
 
     Future<void> fetchDateList(
       StateSetter setModalState,
@@ -3405,6 +3430,7 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
               (d['students'] as List? ?? [])
                   .map((e) => Map<String, dynamic>.from(e)),
             );
+            syncControllers(inputList);
           });
         }
       } catch (_) {}
@@ -3759,7 +3785,16 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                 'alpa',
                               ].contains(curStatus);
 
+                              final sId = item['id']?.toString() ?? '';
+                              if (!lateControllers.containsKey(sId)) {
+                                lateControllers[sId] = TextEditingController(
+                                  text: '${item['late_minutes'] ?? 0}',
+                                );
+                              }
+                              final ctrl = lateControllers[sId]!;
+
                               return Container(
+                                key: ValueKey('manual_card_$sId'),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF8FAFC),
@@ -4011,9 +4046,9 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                           const SizedBox(width: 8),
                                           SizedBox(
                                             width: 90,
-                                            child: TextFormField(
-                                              initialValue:
-                                                  '${item['late_minutes'] ?? 0}',
+                                            child: TextField(
+                                              key: ValueKey('late_ctrl_$sId'),
+                                              controller: ctrl,
                                               keyboardType:
                                                   TextInputType.number,
                                               style: const TextStyle(
@@ -4039,7 +4074,7 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                               ),
                                               onChanged: (v) {
                                                 item['late_minutes'] =
-                                                    int.tryParse(v) ?? 0;
+                                                    int.tryParse(v.trim()) ?? 0;
                                               },
                                             ),
                                           ),
@@ -4095,6 +4130,17 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
                                 ? null
                                 : () async {
                                     setModalState(() => isSaving = true);
+                                    for (var s in inputList) {
+                                      final sId = s['id']?.toString() ?? '';
+                                      if (lateControllers.containsKey(sId)) {
+                                        final parsed = int.tryParse(
+                                          lateControllers[sId]!.text.trim(),
+                                        );
+                                        if (parsed != null) {
+                                          s['late_minutes'] = parsed;
+                                        }
+                                      }
+                                    }
                                     try {
                                       final res = await _dio.post(
                                         '${AppConfig.baseUrl}/guru/presensi/manual-input',
@@ -4169,7 +4215,11 @@ class _PresensiKelasScreenState extends State<PresensiKelasScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      for (var c in lateControllers.values) {
+        c.dispose();
+      }
+    });
   }
 
   // =========================================================================

@@ -51,6 +51,7 @@ class NotificationRouter {
         break;
 
       case 'leave_approval':
+      case 'leave_request':
         if (isGuru) {
           targetScreen = IjinKehadiranScreen(
             token: session.token,
@@ -77,6 +78,8 @@ class NotificationRouter {
         break;
 
       case 'spikap':
+      case 'spikap_laporan':
+      case 'spikap_status_update':
         if (isGuru) {
           targetScreen = SpikapScreen(
             token: session.token,
@@ -94,6 +97,7 @@ class NotificationRouter {
         break;
 
       case 'consultation':
+      case 'konsultasi_guru_wali':
         if (isGuru) {
           targetScreen = GuruWaliScreen(
             token: session.token,
