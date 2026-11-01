@@ -33,12 +33,15 @@ build_school() {
   echo "🌐 Server Domain     : $BASE_URL"
   echo "----------------------------------------------------------------------"
 
-  # 1. Update Logo Launcher jika file logo.png tersedia di folder sekolah
+  # 1. Update In-App Asset Logo & Icon Launcher jika file logo.png tersedia
   if [ -f "$LOGO_PATH" ]; then
-    echo "🎨 Menggenerasi Icon Aplikasi dari: $LOGO_PATH"
+    echo "🎨 Menyalin logo internal aplikasi ke: assets/images/logo_sekolah.png"
+    cp "$LOGO_PATH" "assets/images/logo_sekolah.png"
+
+    echo "🎨 Menggenerasi Icon Launcher Aplikasi dari: $LOGO_PATH"
     cat <<EOF > flutter_launcher_icons.yaml
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
   image_path: "$LOGO_PATH"
   min_sdk_android: 21
