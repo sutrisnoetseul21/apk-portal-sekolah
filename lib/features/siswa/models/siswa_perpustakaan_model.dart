@@ -217,15 +217,18 @@ class SiswaPerpustakaanSummaryResponse {
   });
 
   factory SiswaPerpustakaanSummaryResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>? ?? {};
+    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : <String, dynamic>{};
+    final studentJson = data['student'] is Map<String, dynamic> ? data['student'] as Map<String, dynamic> : <String, dynamic>{};
+    final countsJson = data['counts'] is Map<String, dynamic> ? data['counts'] as Map<String, dynamic> : <String, dynamic>{};
+    final rawRecent = data['recent_pinjaman'] is List ? data['recent_pinjaman'] as List : [];
 
     return SiswaPerpustakaanSummaryResponse(
-      student: SiswaPerpustakaanStudent.fromJson(data['student'] as Map<String, dynamic>? ?? {}),
-      counts: SiswaPerpustakaanCounts.fromJson(data['counts'] as Map<String, dynamic>? ?? {}),
-      recentPinjaman: (data['recent_pinjaman'] as List<dynamic>?)
-              ?.map((e) => SiswaPinjamanItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
+      student: SiswaPerpustakaanStudent.fromJson(studentJson),
+      counts: SiswaPerpustakaanCounts.fromJson(countsJson),
+      recentPinjaman: rawRecent
+          .whereType<Map<String, dynamic>>()
+          .map((e) => SiswaPinjamanItem.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -240,14 +243,15 @@ class SiswaPinjamanAktifResponse {
   });
 
   factory SiswaPinjamanAktifResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>? ?? {};
+    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : <String, dynamic>{};
+    final rawItems = data['items'] is List ? data['items'] as List : [];
 
     return SiswaPinjamanAktifResponse(
       total: (data['total'] as num?)?.toInt() ?? 0,
-      items: (data['items'] as List<dynamic>?)
-              ?.map((e) => SiswaPinjamanItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
+      items: rawItems
+          .whereType<Map<String, dynamic>>()
+          .map((e) => SiswaPinjamanItem.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -262,14 +266,16 @@ class SiswaRiwayatPinjamResponse {
   });
 
   factory SiswaRiwayatPinjamResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>? ?? {};
+    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : <String, dynamic>{};
+    final rawItems = data['items'] is List ? data['items'] as List : [];
+    final paginationJson = data['pagination'] is Map<String, dynamic> ? data['pagination'] as Map<String, dynamic> : <String, dynamic>{};
 
     return SiswaRiwayatPinjamResponse(
-      items: (data['items'] as List<dynamic>?)
-              ?.map((e) => SiswaPinjamanItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      pagination: SiswaPerpustakaanPagination.fromJson(data['pagination'] as Map<String, dynamic>? ?? {}),
+      items: rawItems
+          .whereType<Map<String, dynamic>>()
+          .map((e) => SiswaPinjamanItem.fromJson(e))
+          .toList(),
+      pagination: SiswaPerpustakaanPagination.fromJson(paginationJson),
     );
   }
 }
@@ -284,14 +290,16 @@ class SiswaRiwayatKunjunganResponse {
   });
 
   factory SiswaRiwayatKunjunganResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>? ?? {};
+    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : <String, dynamic>{};
+    final rawItems = data['items'] is List ? data['items'] as List : [];
+    final paginationJson = data['pagination'] is Map<String, dynamic> ? data['pagination'] as Map<String, dynamic> : <String, dynamic>{};
 
     return SiswaRiwayatKunjunganResponse(
-      items: (data['items'] as List<dynamic>?)
-              ?.map((e) => SiswaKunjunganItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      pagination: SiswaPerpustakaanPagination.fromJson(data['pagination'] as Map<String, dynamic>? ?? {}),
+      items: rawItems
+          .whereType<Map<String, dynamic>>()
+          .map((e) => SiswaKunjunganItem.fromJson(e))
+          .toList(),
+      pagination: SiswaPerpustakaanPagination.fromJson(paginationJson),
     );
   }
 }

@@ -68,7 +68,8 @@ class SiswaDashboardService {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final data = response.data['data'] as Map<String, dynamic>;
+        final rawData = response.data['data'];
+        final data = rawData is Map<String, dynamic> ? rawData : <String, dynamic>{};
         return SiswaAkademikDashboardResponse.fromJson(data);
       } else {
         throw Exception(response.data['message'] ?? 'Gagal memuat data kalender akademik siswa.');

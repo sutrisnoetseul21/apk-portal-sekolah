@@ -91,8 +91,8 @@ class SiswaGuruWaliDashboardResponse {
   });
 
   factory SiswaGuruWaliDashboardResponse.fromJson(Map<String, dynamic> json) {
-    final rawGuruWali = json['guru_wali'] as Map<String, dynamic>?;
-    final rawCounts = json['counts'] as Map<String, dynamic>? ?? {};
+    final rawGuruWali = json['guru_wali'] is Map<String, dynamic> ? json['guru_wali'] as Map<String, dynamic> : null;
+    final rawCounts = json['counts'] is Map<String, dynamic> ? json['counts'] as Map<String, dynamic> : <String, dynamic>{};
 
     return SiswaGuruWaliDashboardResponse(
       hasGuruWali: json['has_guru_wali'] == true,

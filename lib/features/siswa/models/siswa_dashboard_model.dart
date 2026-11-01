@@ -155,11 +155,11 @@ class SiswaDashboardSummary {
   });
 
   factory SiswaDashboardSummary.fromJson(Map<String, dynamic> json) {
-    final studentJson = json['student'] as Map<String, dynamic>? ?? {};
-    final schoolJson = json['school'] as Map<String, dynamic>? ?? {};
-    final attendanceJson = json['today_attendance'] as Map<String, dynamic>? ?? {};
-    final sholatJson = json['today_sholat'] as Map<String, dynamic>? ?? {};
-    final quickStatsJson = json['quick_stats'] as Map<String, dynamic>? ?? {};
+    final studentJson = json['student'] is Map<String, dynamic> ? json['student'] as Map<String, dynamic> : <String, dynamic>{};
+    final schoolJson = json['school'] is Map<String, dynamic> ? json['school'] as Map<String, dynamic> : <String, dynamic>{};
+    final attendanceJson = json['today_attendance'] is Map<String, dynamic> ? json['today_attendance'] as Map<String, dynamic> : <String, dynamic>{};
+    final sholatJson = json['today_sholat'] is Map<String, dynamic> ? json['today_sholat'] as Map<String, dynamic> : <String, dynamic>{};
+    final quickStatsJson = json['quick_stats'] is Map<String, dynamic> ? json['quick_stats'] as Map<String, dynamic> : <String, dynamic>{};
 
     return SiswaDashboardSummary(
       student: SiswaProfileInfo.fromJson(studentJson),

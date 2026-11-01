@@ -180,13 +180,13 @@ class SiswaIjinListResponse {
   });
 
   factory SiswaIjinListResponse.fromJson(Map<String, dynamic> json) {
-    final rawCounts = json['counts'] as Map<String, dynamic>? ?? {};
-    final rawItems = json['items'] as List<dynamic>? ?? [];
-    final rawPagination = json['pagination'] as Map<String, dynamic>? ?? {};
+    final rawCounts = json['counts'] is Map<String, dynamic> ? json['counts'] as Map<String, dynamic> : <String, dynamic>{};
+    final rawItems = json['items'] is List ? json['items'] as List : [];
+    final rawPagination = json['pagination'] is Map<String, dynamic> ? json['pagination'] as Map<String, dynamic> : <String, dynamic>{};
 
     return SiswaIjinListResponse(
       counts: SiswaIjinCounts.fromJson(rawCounts),
-      items: rawItems.map((e) => SiswaIjinItem.fromJson(e as Map<String, dynamic>)).toList(),
+      items: rawItems.whereType<Map<String, dynamic>>().map((e) => SiswaIjinItem.fromJson(e)).toList(),
       pagination: SiswaIjinPagination.fromJson(rawPagination),
     );
   }

@@ -176,32 +176,42 @@ class SiswaAkademikDashboardResponse {
   });
 
   factory SiswaAkademikDashboardResponse.fromJson(Map<String, dynamic> json) {
-    final periodJson = json['selected_period'] as Map<String, dynamic>? ?? {};
-    final statsJson = json['stats'] as Map<String, dynamic>? ?? {};
-    final monthsList = (json['available_months'] as List<dynamic>? ?? [])
-        .map((e) => SiswaAvailableMonth.fromJson(e as Map<String, dynamic>))
+    final periodJson = json['selected_period'] is Map<String, dynamic>
+        ? json['selected_period'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    final statsJson = json['stats'] is Map<String, dynamic>
+        ? json['stats'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    final monthsList = (json['available_months'] is List ? json['available_months'] as List : [])
+        .whereType<Map<String, dynamic>>()
+        .map((e) => SiswaAvailableMonth.fromJson(e))
         .toList();
 
-    final matrixJson = json['attendance_matrix'] as Map<String, dynamic>? ?? {};
     final Map<int, SiswaDayAttendance> matrixMap = {};
-    matrixJson.forEach((key, val) {
-      final dayInt = int.tryParse(key);
-      if (dayInt != null && val is Map<String, dynamic>) {
-        matrixMap[dayInt] = SiswaDayAttendance.fromJson(val);
-      }
-    });
+    if (json['attendance_matrix'] is Map) {
+      final matrixJson = json['attendance_matrix'] as Map;
+      matrixJson.forEach((key, val) {
+        final dayInt = int.tryParse(key.toString());
+        if (dayInt != null && val is Map<String, dynamic>) {
+          matrixMap[dayInt] = SiswaDayAttendance.fromJson(val);
+        }
+      });
+    }
 
-    final holidaysJson = json['holidays'] as Map<String, dynamic>? ?? {};
     final Map<int, bool> holidaysMap = {};
-    holidaysJson.forEach((key, val) {
-      final dayInt = int.tryParse(key);
-      if (dayInt != null) {
-        holidaysMap[dayInt] = val == true;
-      }
-    });
+    if (json['holidays'] is Map) {
+      final holidaysJson = json['holidays'] as Map;
+      holidaysJson.forEach((key, val) {
+        final dayInt = int.tryParse(key.toString());
+        if (dayInt != null) {
+          holidaysMap[dayInt] = val == true;
+        }
+      });
+    }
 
-    final recentList = (json['recent_activity'] as List<dynamic>? ?? [])
-        .map((e) => SiswaRecentActivity.fromJson(e as Map<String, dynamic>))
+    final recentList = (json['recent_activity'] is List ? json['recent_activity'] as List : [])
+        .whereType<Map<String, dynamic>>()
+        .map((e) => SiswaRecentActivity.fromJson(e))
         .toList();
 
     return SiswaAkademikDashboardResponse(
