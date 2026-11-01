@@ -35,23 +35,34 @@ class IjinKehadiranService {
     int page = 1,
     String? identifier,
   }) async {
-    final response = await dio.get(
-      ApiEndpoints.guruIjinList,
-      queryParameters: {
-        'status': status,
-        if (classId != null && classId.isNotEmpty) 'class_id': classId,
-        if (month != null && month.isNotEmpty) 'month': month,
-        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        'page': page,
-        if (identifier != null && identifier.isNotEmpty) 'identifier': identifier,
-      },
-    );
+    try {
+      final response = await dio.get(
+        ApiEndpoints.guruIjinList,
+        queryParameters: {
+          'status': status,
+          if (classId != null && classId.isNotEmpty) 'class_id': classId,
+          if (month != null && month.isNotEmpty) 'month': month,
+          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+          'page': page,
+          if (identifier != null && identifier.isNotEmpty) 'identifier': identifier,
+        },
+      );
 
-    if (response.statusCode == 200 && response.data['success'] == true) {
-      final data = response.data['data'] as Map<String, dynamic>;
-      return LeaveRequestListResponse.fromJson(data);
-    } else {
-      throw Exception(response.data['message'] ?? 'Gagal memuat daftar permohonan ijin.');
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        return LeaveRequestListResponse.fromJson(data);
+      } else {
+        throw Exception(response.data['message'] ?? 'Gagal memuat daftar permohonan ijin.');
+      }
+    } on DioException catch (e) {
+      final serverMsg = e.response?.data?['message']?.toString();
+      if (serverMsg != null && serverMsg.isNotEmpty) {
+        throw Exception(serverMsg);
+      }
+      if (e.response?.statusCode == 403) {
+        throw Exception('Akun Anda belum memiliki kelas binaan sebagai Wali Kelas.');
+      }
+      throw Exception('Gagal menghubungi server (${e.response?.statusCode ?? 'Koneksi'}).');
     }
   }
 
