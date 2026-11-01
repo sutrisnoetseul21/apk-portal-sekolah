@@ -49,4 +49,9 @@ app.*.map.json
 
 # Kotlin cache
 .kotlin/
+
+# Output APK binaries
+*.apk
+dist/
+android/app/*firebase-adminsdk*.json
 **/android/.kotlin/

@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/storage/session_storage.dart';
 import '../../../core/utils/image_compress_util.dart';
 import '../../auth/screens/login_screen.dart';
@@ -769,6 +770,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
 
     if (confirm != true) return;
 
+    await FcmService.instance.unregisterTokenWithBackend();
     await SessionStorage.clearSession();
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(

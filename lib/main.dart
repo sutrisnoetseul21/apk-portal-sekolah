@@ -4,6 +4,8 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/config/app_config.dart';
 import 'core/constants/app_colors.dart';
+import 'core/services/fcm_service.dart';
+import 'core/utils/notification_router.dart';
 import 'features/auth/screens/splash_screen.dart';
 
 void main() async {
@@ -11,6 +13,13 @@ void main() async {
 
   // Inisialisasi locale simbol tanggal bahasa Indonesia
   await initializeDateFormatting('id_ID', null);
+
+  // Inisialisasi Firebase Cloud Messaging & Channel Notifikasi Lokal secara aman (Crash-Proof)
+  try {
+    await FcmService.instance.initialize();
+  } catch (e) {
+    debugPrint("FcmService initialization skipped or failed: $e");
+  }
 
   // Konfigurasi Navigasi Sistem Android: Memastikan tombol navigasi bawah
   // (Back, Home, Recent Apps) dan Status Bar atas selalu tampil (Non-Fullscreen).
@@ -38,6 +47,7 @@ class SmartSchoolApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: AppConfig.appName,
+      navigatorKey: NotificationRouter.navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

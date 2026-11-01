@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "541628975210",
+    "project_id": "notif-android-testing",
+    "storage_bucket": "notif-android-testing.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:541628975210:android:d0ce6da476d4a8bfbe2213",
+        "android_client_info": {
+          "package_name": "id.haflaitsolution.apk_portal_smpn1_sampang"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3P8uPTCetbgKoyK44nRnQj5xVUKVIcG8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

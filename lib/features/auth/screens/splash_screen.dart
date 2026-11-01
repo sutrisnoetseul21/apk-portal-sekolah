@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/storage/session_storage.dart';
 import '../../guru/screens/dashboard_guru_screen.dart';
 import '../../siswa/screens/dashboard_siswa_screen.dart';
@@ -109,6 +110,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     // Jika sesi login sudah tersimpan di perangkat, langsung masuk ke Portal tanpa login ulang
     if (savedSession != null) {
+      // Sinkronisasi token FCM & periksa notifikasi cold start
+      FcmService.instance.registerTokenWithBackend(token: savedSession.token);
+      FcmService.instance.checkInitialMessage();
+
       final targetSchool = _schoolName.isNotEmpty
           ? _schoolName
           : savedSession.schoolName;

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/storage/session_storage.dart';
 import '../../../core/widgets/school_logo_widget.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../notification/screens/notification_inbox_screen.dart';
 import '../models/siswa_dashboard_model.dart';
 import '../services/siswa_dashboard_service.dart';
 import 'presensi_siswa_screen.dart';
@@ -665,6 +667,15 @@ class _DashboardSiswaScreenState extends State<DashboardSiswaScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.notifications_none_rounded),
+            tooltip: 'Pusat Notifikasi',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationInboxScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.account_circle_outlined),
             tooltip: 'Profil Saya',
             onPressed: _navigateToProfil,
@@ -702,6 +713,7 @@ class _DashboardSiswaScreenState extends State<DashboardSiswaScreen> {
               );
 
               if (confirm == true) {
+                await FcmService.instance.unregisterTokenWithBackend();
                 await SessionStorage.clearSession();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(

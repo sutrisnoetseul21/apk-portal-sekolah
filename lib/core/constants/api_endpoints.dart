@@ -3,11 +3,16 @@ class ApiEndpoints {
   // Informasi Publik Sekolah
   static const String schoolInfo = '/school-info';
 
-  // Autentikasi
+  // Autentikasi & FCM Token
   static const String login = '/auth/login';
   static const String me = '/auth/me';
   static const String logout = '/auth/logout';
   static const String fcmToken = '/auth/fcm-token';
+
+  // Notifikasi Inbox (Pusat Notifikasi In-App)
+  static const String notifications = '/notifications';
+  static String notificationMarkAsRead(String id) => '/notifications/$id/read';
+  static const String notificationMarkAllAsRead = '/notifications/read-all';
 
   // Modul Siswa & Pelajar
   static const String siswaDashboardSummary = '/siswa/dashboard-summary';

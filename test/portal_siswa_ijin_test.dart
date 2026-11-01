@@ -37,7 +37,7 @@ void main() {
     expect(find.text('1 Hari'), findsOneWidget);
 
     // Pastikan Field Alasan & Bukti Foto ter-render
-    expect(find.text('Alasan / Keterangan'), findsOneWidget);
+    expect(find.textContaining('Alasan / Keterangan'), findsOneWidget);
     expect(find.text('Bukti Foto / Surat Lampiran'), findsOneWidget);
 
     // Pastikan Tombol Submit ter-render

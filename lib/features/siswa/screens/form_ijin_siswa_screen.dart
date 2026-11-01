@@ -737,13 +737,14 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Alasan / Keterangan',
+            'Alasan / Keterangan (Maks. 200 Karakter)',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 10),
           TextFormField(
             controller: _reasonController,
             maxLines: 3,
+            maxLength: 200,
             decoration: InputDecoration(
               hintText: _selectedType == 'sakit'
                   ? 'Contoh: Mengalami demam tinggi dan flu, beristirahat sesuai anjuran dokter.'
@@ -771,6 +772,9 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
               }
               if (value.trim().length < 3) {
                 return 'Alasan minimal 3 karakter.';
+              }
+              if (value.trim().length > 200) {
+                return 'Alasan tidak boleh lebih dari 200 karakter.';
               }
               return null;
             },

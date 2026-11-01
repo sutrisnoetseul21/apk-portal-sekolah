@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/storage/session_storage.dart';
 import '../../siswa/screens/dashboard_siswa_screen.dart';
 import '../../guru/screens/dashboard_guru_screen.dart';
@@ -228,6 +229,9 @@ class _LoginScreenState extends State<LoginScreen> {
       schoolLogoUrl: _logoUrl,
       schoolLogoBase64: _logoBase64,
     );
+
+    // Daftarkan token FCM perangkat ke backend
+    FcmService.instance.registerTokenWithBackend(token: token);
 
     if (!mounted) return;
 
