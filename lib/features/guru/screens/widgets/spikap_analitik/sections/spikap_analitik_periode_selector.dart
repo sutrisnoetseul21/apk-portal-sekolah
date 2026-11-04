@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Komponen pemilih periode analitik kasus SPIKAP (30 Hari, 3 Bulan, 6 Bulan, 1 Tahun)
 class SpikapAnalitikPeriodeSelector extends StatelessWidget {

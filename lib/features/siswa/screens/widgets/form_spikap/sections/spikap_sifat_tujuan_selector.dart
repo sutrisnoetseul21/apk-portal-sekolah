@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Komponen pemilih sifat laporan (Darurat vs Biasa) dan tujuan penerima (BK vs Wali Kelas)
 class SpikapSifatTujuanSelector extends StatelessWidget {

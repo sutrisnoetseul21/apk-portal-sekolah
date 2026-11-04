@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Item Baris Presensi Siswa di Sesi KBM Jurnal Mengajar
 class StudentJurnalAttendanceTile extends StatelessWidget {

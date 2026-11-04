@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Bagian Statistik Presensi (Rekap Harian / Bulanan, Grid 2x2 Gradient Card, Switcher & Pencarian)
 class PresensiStatsSection extends StatelessWidget {

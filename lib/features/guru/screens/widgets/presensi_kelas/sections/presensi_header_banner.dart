@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Banner Hero Header Presensi Kelas Binaan
 class PresensiHeaderBanner extends StatelessWidget {

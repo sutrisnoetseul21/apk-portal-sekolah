@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 import '../../../models/siswa_guru_wali_model.dart';
 
 /// Kartu Informasi Guru Wali Asuh Siswa & Tombol WhatsApp

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 import '../../models/siswa_spikap_model.dart';
 
 /// Card item riwayat aduan siswa di SPIKAP

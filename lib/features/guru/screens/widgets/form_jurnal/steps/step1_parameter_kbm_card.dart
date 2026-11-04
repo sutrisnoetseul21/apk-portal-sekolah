@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Langkah 1 Form Jurnal Mengajar: Parameter Pembelajaran & Jadwal Waktu
 class Step1ParameterKbmCard extends StatelessWidget {

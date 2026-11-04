@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
-import '../../detail_presensi_siswa_screen.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/screens/detail_presensi_siswa_screen.dart';
 
 /// Seksi Daftar Presensi Siswa Harian:
 /// - Search Bar (Cari nama / NISN)

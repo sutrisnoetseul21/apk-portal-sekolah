@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/widgets/keyboard_aware_sheet.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/widgets/keyboard_aware_sheet.dart';
 import '../../../models/siswa_guru_wali_model.dart';
 import '../../../services/siswa_guru_wali_service.dart';
 

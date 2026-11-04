@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/utils/image_compress_util.dart';
+import 'package:apk_portal_smpn1_sampang/core/utils/image_compress_util.dart';
 
 /// Komponen upload foto bukti kasus perundungan dengan batasan maks 5 foto
 class SpikapEvidencePhotoUploader extends StatelessWidget {

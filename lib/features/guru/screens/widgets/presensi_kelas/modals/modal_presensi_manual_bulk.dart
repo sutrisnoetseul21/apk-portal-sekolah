@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../../../core/config/app_config.dart';
-import '../../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/config/app_config.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Modal Input Presensi Manual Massal Semua Siswa
 class ModalPresensiManualBulk extends StatefulWidget {

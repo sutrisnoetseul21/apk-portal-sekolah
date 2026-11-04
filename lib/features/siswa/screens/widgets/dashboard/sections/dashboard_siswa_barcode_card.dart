@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../../../core/constants/app_colors.dart';
 
 /// Kartu cepat pintasan kartu barcode digital siswa
 class DashboardSiswaBarcodeCard extends StatelessWidget {

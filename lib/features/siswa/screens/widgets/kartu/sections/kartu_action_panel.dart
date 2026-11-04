@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:apk_android_presensi/features/siswa/models/siswa_kartu_digital_info.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_kartu_model.dart';
 
 /// Panel tombol aksi untuk kartu pelajar:
 /// Scan fullscreen, unduh gambar kartu, unduh biodata, dan salin barcode.

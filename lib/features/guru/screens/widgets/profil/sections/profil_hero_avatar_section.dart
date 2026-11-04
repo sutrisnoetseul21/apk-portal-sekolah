@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 import '../../../models/guru_profil_model.dart';
 
 /// Hero Profile Card (Banner Gradasi + Avatar Pendidik + Ringkasan Identitas)

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Modal Bottom Sheet Rincian Detail Jurnal KBM & Kehadiran Siswa
 class SheetDetailJurnalKbm {

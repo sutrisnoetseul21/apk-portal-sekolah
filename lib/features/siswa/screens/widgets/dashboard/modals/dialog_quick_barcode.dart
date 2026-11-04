@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:barcode_widget/barcode_widget.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Modal dialog barcode cepat kartu pelajar siswa
 class DialogQuickBarcode extends StatelessWidget {

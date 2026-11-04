@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 import '../../models/siswa_perpustakaan_model.dart';
 
 /// Tab 1: Riwayat buku yang pernah dipinjam dan sudah dikembalikan siswa

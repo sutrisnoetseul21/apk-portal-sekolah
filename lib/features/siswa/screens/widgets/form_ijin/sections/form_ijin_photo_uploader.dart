@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/utils/image_compress_util.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/utils/image_compress_util.dart';
 
 /// Komponen upload foto lampiran dengan kompresi otomatis ala WhatsApp
 class FormIjinPhotoUploader extends StatelessWidget {

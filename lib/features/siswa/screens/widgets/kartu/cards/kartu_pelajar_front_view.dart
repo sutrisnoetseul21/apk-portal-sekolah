@@ -2,8 +2,8 @@ import 'package:barcode_widget/barcode_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/config/app_config.dart';
-import '../../../models/siswa_kartu_model.dart';
+import 'package:apk_portal_smpn1_sampang/core/config/app_config.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_kartu_model.dart';
 import '../painters/kartu_stripes_painter.dart';
 
 /// Sisi Depan Kartu Pelajar Digital (Logo Sekolah, Foto, Nama, Username/NISN & Barcode Code 128)

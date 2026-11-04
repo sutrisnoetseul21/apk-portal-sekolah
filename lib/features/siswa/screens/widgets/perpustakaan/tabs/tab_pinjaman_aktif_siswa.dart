@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 import '../../models/siswa_perpustakaan_model.dart';
 
 /// Tab 0: Daftar buku yang sedang dipinjam siswa

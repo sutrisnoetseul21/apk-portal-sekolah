@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/siswa_ijin_model.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Ringkasan metrik 6 kotak status & kategori permohonan izin siswa
 class IjinSiswaSummaryMetrics extends StatelessWidget {

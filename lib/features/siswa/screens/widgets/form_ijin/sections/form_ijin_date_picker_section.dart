@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Komponen pemilih tanggal mulai dan stepper durasi hari permohonan izin
 class FormIjinDatePickerSection extends StatelessWidget {

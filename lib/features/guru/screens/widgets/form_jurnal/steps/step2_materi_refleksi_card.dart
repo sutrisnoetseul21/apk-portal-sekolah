@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Langkah 2 Form Jurnal Mengajar: Dokumentasi Materi Pokok & Refleksi KBM
 class Step2MateriRefleksiCard extends StatelessWidget {

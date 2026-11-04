@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Kartu Filter Presensi: Tahun Ajaran Terkunci, Pilihan Kelas, & Bulan Kehadiran
 class PresensiFiltersCard extends StatelessWidget {

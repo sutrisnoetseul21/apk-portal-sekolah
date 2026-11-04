@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
+import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 
 /// Seksi Statistik Presensi Sholat Dhuhur:
 /// - Mode Switcher: Harian / Bulanan
