@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/siswa_spikap_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_spikap_model.dart';
 
 /// Hero Banner dan Hotline Perlindungan Kerahasiaan SPIKAP Siswa
 class SpikapSiswaHeroBanner extends StatelessWidget {

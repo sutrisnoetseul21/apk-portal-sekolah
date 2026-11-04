@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../models/siswa_akademik_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_akademik_model.dart';
 
 /// Matriks kalender kehadiran interaktif tanggal 1 s.d. 31
 class PresensiSiswaCalendarCard extends StatelessWidget {
-  final SiswaAkademikPeriod period;
+  final SiswaSelectedPeriod period;
   final Map<int, SiswaDayAttendance> attendanceMatrix;
   final Map<int, bool> holidays;
   final ValueChanged<int> onDayTap;

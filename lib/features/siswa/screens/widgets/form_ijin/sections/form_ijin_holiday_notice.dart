@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../models/siswa_ijin_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_ijin_model.dart';
 
 /// Banner notifikasi pengecekan hari libur kalender sekolah
 class FormIjinHolidayNotice extends StatelessWidget {

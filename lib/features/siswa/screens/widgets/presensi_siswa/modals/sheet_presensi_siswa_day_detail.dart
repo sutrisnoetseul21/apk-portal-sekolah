@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../models/siswa_akademik_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_akademik_model.dart';
 
 /// Modal bottom sheet rincian kehadiran pada satu tanggal tertentu
 class SheetPresensiSiswaDayDetail {
   static void show({
     required BuildContext context,
     required int day,
-    required SiswaAkademikPeriod period,
+    required SiswaSelectedPeriod period,
     required SiswaDayAttendance? att,
     required bool isHoliday,
   }) {

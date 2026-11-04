@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../models/siswa_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_guru_wali_model.dart';
 
 /// Ringkasan Metrik Interaktif SI-WALI Siswa
 class SiwaliSummaryMetrics extends StatelessWidget {

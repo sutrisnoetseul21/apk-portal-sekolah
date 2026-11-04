@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/siswa_ijin_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_ijin_model.dart';
 import '../components/ijin_status_badge.dart';
 
 /// Card item untuk menampilkan riwayat permohonan izin/sakit siswa

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../models/siswa_profil_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_profil_model.dart';
 
 /// Tab 1: Biodata Akademik & Formulir Alamat/Kontak Siswa
 class TabProfilSiswaBiodata extends StatelessWidget {

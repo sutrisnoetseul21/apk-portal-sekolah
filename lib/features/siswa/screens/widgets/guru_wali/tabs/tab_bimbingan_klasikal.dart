@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../models/siswa_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_guru_wali_model.dart';
 import '../cards/siwali_klasikal_card.dart';
 
 /// Tab Konten 2: Pendampingan Klasikal & Kelompok Siswa

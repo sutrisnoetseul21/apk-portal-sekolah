@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../models/siswa_profil_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_profil_model.dart';
 
 /// Hero Header Profil Siswa (Gradasi Sky-Navy + Avatar + Identitas & Status)
 class ProfilSiswaHeroHeader extends StatelessWidget {

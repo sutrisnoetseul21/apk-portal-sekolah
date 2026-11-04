@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
 import 'package:apk_portal_smpn1_sampang/core/widgets/keyboard_aware_sheet.dart';
-import '../../../models/siswa_guru_wali_model.dart';
-import '../../../services/siswa_guru_wali_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/services/siswa_guru_wali_service.dart';
 
 /// Modal Bottom Sheet Detail Konsultasi & Percakapan Pesan Inline
 class ModalDetailKonsultasi extends StatefulWidget {

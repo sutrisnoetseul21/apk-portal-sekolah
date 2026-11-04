@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/siswa_spikap_model.dart';
-import '../../services/siswa_spikap_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_spikap_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/services/siswa_spikap_service.dart';
 
 /// Modal BottomSheet Detail Laporan & Timeline Alur Investigasi SPIKAP Siswa
 class ModalTrackingSpikap extends StatefulWidget {

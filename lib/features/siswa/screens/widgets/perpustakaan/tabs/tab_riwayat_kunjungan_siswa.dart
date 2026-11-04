@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/siswa_perpustakaan_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_perpustakaan_model.dart';
 
 /// Tab 2: Riwayat presensi kunjungan fisik siswa di perpustakaan
 class TabRiwayatKunjunganSiswa extends StatelessWidget {

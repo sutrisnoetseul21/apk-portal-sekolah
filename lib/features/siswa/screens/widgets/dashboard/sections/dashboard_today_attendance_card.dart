@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/siswa_dashboard_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_dashboard_model.dart';
 
 /// Kartu dinamis status presensi masuk & sholat hari ini untuk dashboard siswa
 class DashboardTodayAttendanceCard extends StatelessWidget {

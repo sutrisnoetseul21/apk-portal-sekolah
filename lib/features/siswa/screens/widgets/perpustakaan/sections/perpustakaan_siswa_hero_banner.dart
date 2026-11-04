@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/siswa_perpustakaan_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_perpustakaan_model.dart';
 
 /// Hero Banner Modern Perpustakaan Siswa
 class PerpustakaanSiswaHeroBanner extends StatelessWidget {

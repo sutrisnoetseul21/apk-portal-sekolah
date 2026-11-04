@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/siswa_dashboard_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_dashboard_model.dart';
 import '../cards/siswa_menu_box_card.dart';
 
 /// Grid responsif 7 menu portal siswa (1 kolom di HP, 3 kolom di Tablet)

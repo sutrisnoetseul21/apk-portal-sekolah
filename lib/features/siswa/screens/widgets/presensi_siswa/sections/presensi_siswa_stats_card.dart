@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/siswa_akademik_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_akademik_model.dart';
 
 /// Kartu ringkasan statistik kehadiran bulanan siswa
 class PresensiSiswaStatsCard extends StatelessWidget {

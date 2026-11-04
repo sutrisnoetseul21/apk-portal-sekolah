@@ -1,7 +1,7 @@
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../models/siswa_kartu_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_kartu_model.dart';
 
 /// Modal Dialog Tampilan Barcode Layar Penuh (High Contrast untuk Scanner Gerbang/Perpus)
 class ModalBarcodeFullscreen {

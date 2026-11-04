@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/siswa_spikap_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_spikap_model.dart';
 
 /// Card item riwayat aduan siswa di SPIKAP
 class SpikapSiswaCard extends StatelessWidget {
