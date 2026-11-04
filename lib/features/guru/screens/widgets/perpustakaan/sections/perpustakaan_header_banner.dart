@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../models/perpustakaan_models.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/perpustakaan_models.dart';
 
 /// Banner Header Gradien Modern Perpustakaan Portal Guru
 class PerpustakaanHeaderBanner extends StatelessWidget {

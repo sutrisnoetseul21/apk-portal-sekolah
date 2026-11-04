@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/spikap_models.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/spikap_models.dart';
 
 /// Toolbar pencarian dan chip filter kategori & status SPIKAP Guru
 class SpikapFilterToolbar extends StatelessWidget {

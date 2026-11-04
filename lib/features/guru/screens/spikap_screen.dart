@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
 import '../models/spikap_models.dart';
 import '../services/spikap_service.dart';
 import 'spikap_analitik_screen.dart';

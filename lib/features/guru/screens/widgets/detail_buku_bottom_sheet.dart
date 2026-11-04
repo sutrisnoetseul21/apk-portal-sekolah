@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/perpustakaan_models.dart';
-import '../../services/perpustakaan_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/perpustakaan_models.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/perpustakaan_service.dart';
 
 /// Modal Bottom Sheet untuk menampilkan detail lengkap buku perpustakaan
 class DetailBukuBottomSheet extends StatefulWidget {

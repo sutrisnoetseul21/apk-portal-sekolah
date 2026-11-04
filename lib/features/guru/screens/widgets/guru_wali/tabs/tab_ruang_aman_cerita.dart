@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../../models/konsultasi_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/konsultasi_guru_wali_model.dart';
 import '../cards/konsultasi_cerita_card.dart';
 
 /// Tab 3 Guru Wali: Ruang Aman Cerita (Daftar Konsultasi Siswa)

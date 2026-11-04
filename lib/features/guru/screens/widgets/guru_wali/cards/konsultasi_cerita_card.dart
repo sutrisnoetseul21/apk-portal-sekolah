@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/konsultasi_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/konsultasi_guru_wali_model.dart';
 
 /// Kartu Item Konsultasi Siswa (Ruang Aman Cerita Guru Wali)
 class KonsultasiCeritaCard extends StatelessWidget {

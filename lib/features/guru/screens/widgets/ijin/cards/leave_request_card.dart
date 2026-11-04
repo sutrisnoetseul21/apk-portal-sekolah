@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../models/leave_request_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/leave_request_model.dart';
 
 /// Kartu Item Permohonan Izin Siswa untuk Wali Kelas
 class LeaveRequestCard extends StatelessWidget {

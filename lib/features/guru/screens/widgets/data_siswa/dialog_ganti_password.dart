@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../models/student_model.dart';
-import '../../../services/data_siswa_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/student_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/data_siswa_service.dart';
 
 /// Dialog untuk mengubah atau mereset password akun login siswa
 class DialogGantiPasswordSiswa extends StatefulWidget {

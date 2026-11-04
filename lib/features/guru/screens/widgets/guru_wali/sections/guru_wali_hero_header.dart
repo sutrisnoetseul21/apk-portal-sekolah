@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/guru_wali_dashboard_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/guru_wali_dashboard_model.dart';
 
 /// Hero Header Summary Card Guru Wali (SI-WALI)
 class GuruWaliHeroHeader extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../../models/guru_wali_dashboard_model.dart';
-import '../../../services/guru_wali_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/guru_wali_dashboard_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/guru_wali_service.dart';
 
 /// Modal Bottomsheet untuk mencatat Bimbingan Klasikal (Kelompok Besar / Massal)
 /// Sesuai Permendikdasmen No. 11/2025

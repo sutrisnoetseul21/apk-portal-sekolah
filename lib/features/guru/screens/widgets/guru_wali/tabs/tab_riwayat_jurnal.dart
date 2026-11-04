@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../../models/jurnal_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/jurnal_guru_wali_model.dart';
 import '../cards/jurnal_item_card.dart';
 
 /// Tab 2 Guru Wali: Riwayat Jurnal Dampingan Siswa

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../models/guru_profil_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/guru_profil_model.dart';
 
 /// Modal BottomSheet Pilihan Aksi Foto Profil (Kamera, Galeri, Hapus)
 class SheetGantiFotoProfil {

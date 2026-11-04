@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../models/perpustakaan_models.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/perpustakaan_models.dart';
 import '../cards/kunjungan_guru_card.dart';
 
 /// Tab 4: Riwayat Kunjungan Fisik Guru ke Perpustakaan

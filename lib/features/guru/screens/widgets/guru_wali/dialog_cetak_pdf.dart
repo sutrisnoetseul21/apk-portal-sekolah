@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../services/guru_wali_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/guru_wali_service.dart';
 
 /// Dialog untuk memilih format dan periode cetak PDF resmi Laporan Guru Wali
 class DialogCetakPdf extends StatefulWidget {

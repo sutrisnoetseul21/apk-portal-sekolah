@@ -24,7 +24,6 @@ class StudentJurnalAttendanceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sId = '${item['student_id']}';
     final name = '${item['name'] ?? '-'}';
     final nis = '${item['nis'] ?? '-'}';
     final statusGerbang = '${item['status_gerbang'] ?? 'belum_absen'}';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/jurnal_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/jurnal_guru_wali_model.dart';
 
 /// Kartu Item Riwayat Jurnal Guru Wali
 class JurnalItemCard extends StatelessWidget {

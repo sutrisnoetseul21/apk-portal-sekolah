@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
-import '../../../services/ijin_kehadiran_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/ijin_kehadiran_service.dart';
 
 /// Modal Bottom Sheet Detail Permohonan Izin & Bilah Keputusan Wali Kelas
 class ModalDetailIjin extends StatefulWidget {

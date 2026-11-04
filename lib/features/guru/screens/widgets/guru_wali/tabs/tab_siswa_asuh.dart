@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/guru_wali_dashboard_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/guru_wali_dashboard_model.dart';
 import '../cards/siswa_asuh_kotak_card.dart';
 
 /// Tab 1 Guru Wali: Model Kotak-Kotak Siswa Asuh (Siswa Aktif & Arsip)

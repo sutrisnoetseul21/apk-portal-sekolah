@@ -2,8 +2,8 @@ import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:apk_portal_smpn1_sampang/core/utils/pdf_print_util.dart';
-import '../../../models/student_model.dart';
-import '../../../services/data_siswa_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/student_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/data_siswa_service.dart';
 
 /// Modal Dialog untuk menampilkan Pratinjau Kartu Pelajar Digital Barcode Code-128
 class DialogKartuDigitalSiswa extends StatelessWidget {

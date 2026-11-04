@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../../models/student_model.dart';
-import '../../../services/data_siswa_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/student_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/data_siswa_service.dart';
 
 /// Modal Form Lengkap Edit Biodata Siswa dan Penggantian Foto
 class ModalEditBiodataSheet extends StatefulWidget {

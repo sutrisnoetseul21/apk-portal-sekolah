@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:apk_portal_smpn1_sampang/core/widgets/keyboard_aware_sheet.dart';
-import '../../../models/konsultasi_guru_wali_model.dart';
-import '../../../services/guru_wali_service.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/konsultasi_guru_wali_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/services/guru_wali_service.dart';
 
 /// Bottomsheet interaktif Ruang Aman Cerita (Chat dua arah Siswa & Guru Wali)
 /// Dilengkapi realtime short-polling, aksi Jadwalkan Tatap Muka,

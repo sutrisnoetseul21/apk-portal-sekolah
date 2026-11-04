@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../models/data_siswa_filter_model.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/data_siswa_filter_model.dart';
 
 /// Dropdown selector tahun ajaran & kelas rombel siswa
 class DataSiswaRombelSelector extends StatelessWidget {

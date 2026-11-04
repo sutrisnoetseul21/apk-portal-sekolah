@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../models/spikap_models.dart';
+import 'package:apk_portal_smpn1_sampang/features/guru/models/spikap_models.dart';
 
 /// 4 KPI Stat Cards untuk Dasbor SPIKAP Guru
 class SpikapKpiGrid extends StatelessWidget {
