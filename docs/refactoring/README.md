@@ -128,6 +128,8 @@ Dokumentasi di dalam folder `docs/refactoring/` ini disusun secara spesifik per 
    *Plan Breakdown Fase 6: Pemecahan 5 Berkas Formulir & Layanan Tambahan (700–950 baris) menuju Tag v1.0.1.*
 13. [`13-laporan-fase-6-form-dan-layanan.md`](./13-laporan-fase-6-form-dan-layanan.md)  
    *Laporan Hasil Penyelesaian Fase 6: Pemecahan 4.123 Baris Form Izin, Presensi Mandiri, Form SPIKAP, Data Siswa & Analitik SPIKAP.*
+14. [`14-plan-fase-7-dekonstruksi-modal-dan-widget-besar.md`](./14-plan-fase-7-dekonstruksi-modal-dan-widget-besar.md)  
+   *Plan Lanjutan Fase 7: Audit & Roadmap Dekonstruksi 36 Berkas Berukuran >500 Baris (Modal Raksasa, Cards & Controller Screens).*
 
 ---
 
