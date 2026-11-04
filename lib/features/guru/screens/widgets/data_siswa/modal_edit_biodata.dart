@@ -680,7 +680,7 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFieldLabel('Sekolah Asal (SD / MI)'),
-          _buildTextField(_previousSchoolController, 'Contoh: SDN 1 Kedungreja'),
+          _buildTextField(_previousSchoolController, 'Contoh: SDN 1 / Asal SD'),
 
           const SizedBox(height: 14),
 

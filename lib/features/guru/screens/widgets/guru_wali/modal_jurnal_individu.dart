@@ -173,95 +173,95 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(2),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Catat Jurnal Individu',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                  backgroundImage: widget.siswa.avatarUrl != null
-                      ? NetworkImage(widget.siswa.avatarUrl!)
-                      : null,
-                  child: widget.siswa.avatarUrl == null
-                      ? Text(
-                          widget.siswa.name.isNotEmpty
-                              ? widget.siswa.name[0].toUpperCase()
-                              : 'S',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2563EB),
-                          ),
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Catat Jurnal Individu',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        '${widget.siswa.name} • ${widget.siswa.kelasName}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+            Text(
+              '${widget.siswa.name} • ${widget.siswa.kelasName}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-          // Form Scrollable
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Ringkasan Siswa
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
                   children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                      backgroundImage: widget.siswa.avatarUrl != null
+                          ? NetworkImage(widget.siswa.avatarUrl!)
+                          : null,
+                      child: widget.siswa.avatarUrl == null
+                          ? Text(
+                              widget.siswa.name.isNotEmpty
+                                  ? widget.siswa.name[0].toUpperCase()
+                                  : 'S',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2563EB),
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.siswa.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          Text(
+                            'NISN: ${widget.siswa.nisn} • ${widget.siswa.kelasName}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
                     // Tanggal & Waktu Bimbingan
                     const Text(
                       'Tanggal & Waktu Sesi',
@@ -459,6 +459,7 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
                     TextFormField(
                       controller: _uraianController,
                       maxLines: 4,
+                      scrollPadding: const EdgeInsets.only(bottom: 120),
                       style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Tuliskan topik, dinamika perkembangan, atau hal yang dibahas...',
@@ -491,6 +492,7 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
                     TextFormField(
                       controller: _rtlController,
                       maxLines: 2,
+                      scrollPadding: const EdgeInsets.only(bottom: 120),
                       style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Langkah nyata yang disepakati untuk bimbingan berikutnya...',
@@ -560,6 +562,7 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
                             const SizedBox(height: 10),
                             TextFormField(
                               controller: _catatanApresiasiController,
+                              scrollPadding: const EdgeInsets.only(bottom: 120),
                               style: const TextStyle(fontSize: 12),
                               decoration: InputDecoration(
                                 hintText: 'Pesan apresiasi penyemangat siswa...',
@@ -652,6 +655,7 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
                             const SizedBox(height: 10),
                             TextFormField(
                               controller: _alasanBkController,
+                              scrollPadding: const EdgeInsets.only(bottom: 120),
                               style: const TextStyle(fontSize: 12),
                               decoration: InputDecoration(
                                 hintText: 'Alasan dan latar belakang rujukan ke BK...',
@@ -699,9 +703,8 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 }
+
+typedef FormJurnalIndividuScreen = ModalJurnalIndividu;

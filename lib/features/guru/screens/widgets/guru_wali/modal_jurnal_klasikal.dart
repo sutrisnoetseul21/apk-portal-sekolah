@@ -166,84 +166,38 @@ class _ModalJurnalKlasikalState extends State<ModalJurnalKlasikal> {
   Widget build(BuildContext context) {
     final allSelected = _selectedStudentIds.length == widget.siswaList.length;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.92,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(2),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Catat Bimbingan Klasikal',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.groups_rounded, color: Color(0xFF2563EB), size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Catat Bimbingan Klasikal',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        '${_selectedStudentIds.length} dari ${widget.siswaList.length} siswa terpilih',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF2563EB),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+            Text(
+              '${_selectedStudentIds.length} dari ${widget.siswaList.length} siswa terpilih',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF2563EB),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-          // Form Scrollable
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                     // Checklist Siswa Peserta Sesi
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -472,6 +426,7 @@ class _ModalJurnalKlasikalState extends State<ModalJurnalKlasikal> {
                     TextFormField(
                       controller: _uraianController,
                       maxLines: 4,
+                      scrollPadding: const EdgeInsets.only(bottom: 120),
                       style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Tuliskan topik bimbingan klasikal, materi sosialisasi, atau dinamika kelompok...',
@@ -504,6 +459,7 @@ class _ModalJurnalKlasikalState extends State<ModalJurnalKlasikal> {
                     TextFormField(
                       controller: _rtlController,
                       maxLines: 2,
+                      scrollPadding: const EdgeInsets.only(bottom: 120),
                       style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Langkah monitoring atau tugas kelompok bersama...',
@@ -544,9 +500,8 @@ class _ModalJurnalKlasikalState extends State<ModalJurnalKlasikal> {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 }
+
+typedef FormJurnalKlasikalScreen = ModalJurnalKlasikal;

@@ -4,11 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/image_compress_util.dart';
 import '../services/siswa_spikap_service.dart';
+import 'widgets/form_spikap/sections/spikap_notice_banner.dart';
+import 'widgets/form_spikap/sections/spikap_sifat_tujuan_selector.dart';
+import 'widgets/form_spikap/sections/spikap_jenis_perundungan_selector.dart';
+import 'widgets/form_spikap/sections/spikap_evidence_photo_uploader.dart';
 
 /// Layar Formulir Lapor Pengaduan Baru SPIKAP Portal Siswa
-/// Dilengkapi pemilihan sifat darurat/biasa, tujuan penerima (BK/Wali Kelas),
-/// kategori perundungan, lokasi/waktu, uraian kejadian,
-/// serta kompresi foto otomatis ala WhatsApp sebelum dikirim ke server.
 class FormSpikapSiswaScreen extends StatefulWidget {
   final String identifier;
   final String studentName;
@@ -19,7 +20,7 @@ class FormSpikapSiswaScreen extends StatefulWidget {
     super.key,
     required this.identifier,
     required this.studentName,
-    this.schoolName = 'SMP Negeri 3 Kedungreja',
+    this.schoolName = '',
     this.token,
   });
 
@@ -296,113 +297,6 @@ class _FormSpikapSiswaScreenState extends State<FormSpikapSiswaScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Buat Laporan SPIKAP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Notice Banner
-              _buildNoticeBanner(),
-              const SizedBox(height: 20),
-
-              // 1. Sifat Laporan
-              _buildSectionTitle('1. Sifat Laporan', isRequired: true),
-              const SizedBox(height: 8),
-              _buildSifatSelector(),
-              const SizedBox(height: 20),
-
-              // 2. Tujuan Penerima (Hanya jika Biasa)
-              if (_sifatLaporan == 'biasa') ...[
-                _buildSectionTitle('2. Tujuan Laporan', isRequired: true),
-                const SizedBox(height: 8),
-                _buildTujuanSelector(),
-                const SizedBox(height: 20),
-              ],
-
-              // 3. Jenis Perundungan
-              _buildSectionTitle(
-                _sifatLaporan == 'biasa' ? '3. Jenis Perundungan' : '2. Jenis Perundungan',
-                isRequired: true,
-              ),
-              const SizedBox(height: 8),
-              _buildJenisSelector(),
-              const SizedBox(height: 20),
-
-              // 4. Lokasi & Waktu
-              _buildSectionTitle(
-                _sifatLaporan == 'biasa' ? '4. Tempat & Waktu Kejadian' : '3. Tempat & Waktu Kejadian',
-              ),
-              const SizedBox(height: 8),
-              _buildLokasiField(),
-              const SizedBox(height: 12),
-              _buildWaktuField(),
-              const SizedBox(height: 20),
-
-              // 5. Uraian Kejadian
-              _buildSectionTitle(
-                _sifatLaporan == 'biasa' ? '5. Ceritakan Kejadian' : '4. Ceritakan Kejadian',
-                isRequired: true,
-              ),
-              const SizedBox(height: 8),
-              _buildUraianField(),
-              const SizedBox(height: 20),
-
-              // 6. Lampiran Foto
-              _buildSectionTitle(
-                _sifatLaporan == 'biasa' ? '6. Bukti Foto (Opsional)' : '5. Bukti Foto (Opsional)',
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Maksimal 5 foto bukti (kompresi otomatis ala WhatsApp, hemat ~95% kuota data). Upload video dinonaktifkan demi efisiensi kuota.',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 10),
-              _buildLampiranSection(),
-              const SizedBox(height: 30),
-
-              // Tombol Submit
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _sifatLaporan == 'darurat' ? const Color(0xFFE11D48) : const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: _isSubmitting ? null : _confirmAndSubmit,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send_rounded),
-                  label: Text(
-                    _isSubmitting
-                        ? 'Mengirim Laporan...'
-                        : (_sifatLaporan == 'darurat' ? 'Kirim Laporan Darurat 🚨' : 'Kirim Laporan Pengaduan'),
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSectionTitle(String title, {bool isRequired = false}) {
     return Row(
       children: [
@@ -415,189 +309,6 @@ class _FormSpikapSiswaScreenState extends State<FormSpikapSiswaScreen> {
           const Text('*', style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.bold)),
         ],
       ],
-    );
-  }
-
-  Widget _buildNoticeBanner() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFECDD3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Icon(Icons.lock_rounded, color: Color(0xFFE11D48), size: 20),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Layanan ini adalah ruang aman bagi Anda. Identitas dan laporan Anda dijaga dengan penuh tanggung jawab oleh pihak sekolah.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9F1239), height: 1.35),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSifatSelector() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildChoiceCard(
-            title: '🚨 Darurat',
-            desc: 'Butuh tindakan cepat hari ini',
-            isSelected: _sifatLaporan == 'darurat',
-            activeColor: const Color(0xFFE11D48),
-            onTap: () => setState(() => _sifatLaporan = 'darurat'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildChoiceCard(
-            title: 'Biasa',
-            desc: 'Konseling & tindak lanjut',
-            isSelected: _sifatLaporan == 'biasa',
-            activeColor: const Color(0xFF2563EB),
-            onTap: () => setState(() => _sifatLaporan = 'biasa'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTujuanSelector() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildChoiceCard(
-            title: 'Guru BK',
-            desc: 'Bimbingan & Konseling',
-            isSelected: _tujuanPenerima == 'guru_bk',
-            activeColor: const Color(0xFF2563EB),
-            onTap: () => setState(() => _tujuanPenerima = 'guru_bk'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildChoiceCard(
-            title: 'Wali Kelas',
-            desc: 'Wali kelas binaan Anda',
-            isSelected: _tujuanPenerima == 'wali_kelas',
-            activeColor: const Color(0xFF2563EB),
-            onTap: () => setState(() => _tujuanPenerima = 'wali_kelas'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChoiceCard({
-    required String title,
-    required String desc,
-    required bool isSelected,
-    required Color activeColor,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 52),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor.withValues(alpha: 0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? activeColor : const Color(0xFFCBD5E1),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? activeColor : AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              desc,
-              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildJenisSelector() {
-    final list = [
-      {'key': 'fisik', 'label': 'Kekerasan Fisik', 'desc': 'Pemukulan, dorongan, kontak fisik'},
-      {'key': 'verbal', 'label': 'Kekerasan Verbal', 'desc': 'Ejekan, hinaan, ancaman, fitnah'},
-      {'key': 'sosial', 'label': 'Kekerasan Sosial', 'desc': 'Pengucilan, intimidasi kelompok'},
-      {'key': 'digital', 'label': 'Cyberbullying', 'desc': 'Pelecehan medsos, teror pesan digital'},
-      {'key': 'lainnya', 'label': 'Lainnya', 'desc': 'Bentuk perselisihan / konflik lainnya'},
-    ];
-
-    return Column(
-      children: list.map((item) {
-        final isSel = _jenisPerundungan == item['key'];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => setState(() => _jenisPerundungan = item['key']!),
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 48),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isSel ? const Color(0xFFEFF6FF) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSel ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
-                  width: isSel ? 1.5 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isSel ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-                    color: isSel ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item['label']!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
-                            color: isSel ? const Color(0xFF1D4ED8) : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          item['desc']!,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 
@@ -697,82 +408,112 @@ class _FormSpikapSiswaScreenState extends State<FormSpikapSiswaScreen> {
     );
   }
 
-  Widget _buildLampiranSection() {
-    return Column(
-      children: [
-        // Tombol Lampirkan Foto Bukti (Full Width)
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              side: const BorderSide(color: Color(0xFF2563EB)),
-            ),
-            onPressed: _showFotoSourcePicker,
-            icon: const Icon(Icons.add_a_photo_rounded, size: 20, color: Color(0xFF2563EB)),
-            label: Text(
-              '+ Tambah Foto Bukti (${_fotoAttachments.length}/5)',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text('Buat Laporan SPIKAP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Notice Banner
+              const SpikapNoticeBanner(),
+              const SizedBox(height: 20),
+
+              // 1. Sifat Laporan & Tujuan
+              SpikapSifatTujuanSelector(
+                sifatLaporan: _sifatLaporan,
+                onSifatChanged: (sifat) => setState(() => _sifatLaporan = sifat),
+                tujuanPenerima: _tujuanPenerima,
+                onTujuanChanged: (tujuan) => setState(() => _tujuanPenerima = tujuan),
+              ),
+              const SizedBox(height: 20),
+
+              // 2. Jenis Perundungan
+              _buildSectionTitle(
+                _sifatLaporan == 'biasa' ? '3. Jenis Perundungan' : '2. Jenis Perundungan',
+                isRequired: true,
+              ),
+              const SizedBox(height: 8),
+              SpikapJenisPerundunganSelector(
+                selectedJenis: _jenisPerundungan,
+                onJenisChanged: (jenis) => setState(() => _jenisPerundungan = jenis),
+              ),
+              const SizedBox(height: 20),
+
+              // 3. Lokasi & Waktu
+              _buildSectionTitle(
+                _sifatLaporan == 'biasa' ? '4. Tempat & Waktu Kejadian' : '3. Tempat & Waktu Kejadian',
+              ),
+              const SizedBox(height: 8),
+              _buildLokasiField(),
+              const SizedBox(height: 12),
+              _buildWaktuField(),
+              const SizedBox(height: 20),
+
+              // 4. Uraian Kejadian
+              _buildSectionTitle(
+                _sifatLaporan == 'biasa' ? '5. Ceritakan Kejadian' : '4. Ceritakan Kejadian',
+                isRequired: true,
+              ),
+              const SizedBox(height: 8),
+              _buildUraianField(),
+              const SizedBox(height: 20),
+
+              // 5. Lampiran Foto
+              _buildSectionTitle(
+                _sifatLaporan == 'biasa' ? '6. Bukti Foto (Opsional)' : '5. Bukti Foto (Opsional)',
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Maksimal 5 foto bukti (kompresi otomatis ala WhatsApp, hemat ~95% kuota data). Upload video dinonaktifkan demi efisiensi kuota.',
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 10),
+              SpikapEvidencePhotoUploader(
+                fotoAttachments: _fotoAttachments,
+                onAddPhoto: _showFotoSourcePicker,
+                onRemovePhoto: (index) => setState(() => _fotoAttachments.removeAt(index)),
+              ),
+              const SizedBox(height: 30),
+
+              // Tombol Submit
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _sifatLaporan == 'darurat' ? const Color(0xFFE11D48) : const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: _isSubmitting ? null : _confirmAndSubmit,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send_rounded),
+                  label: Text(
+                    _isSubmitting
+                        ? 'Mengirim Laporan...'
+                        : (_sifatLaporan == 'darurat' ? 'Kirim Laporan Darurat 🚨' : 'Kirim Laporan Pengaduan'),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
         ),
-
-        // Daftar Foto Terlampir
-        if (_fotoAttachments.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          ...List.generate(_fotoAttachments.length, (index) {
-            final item = _fotoAttachments[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(
-                      item.bytes,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Foto Bukti #${index + 1}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          item.note,
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF059669)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE11D48), size: 20),
-                    tooltip: 'Hapus Foto #${index + 1}',
-                    onPressed: () {
-                      setState(() {
-                        _fotoAttachments.removeAt(index);
-                      });
-                    },
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ],
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/app_config.dart';
 
 /// Model data sesi login pengguna yang tersimpan di perangkat
 class SavedUserSession {
@@ -108,7 +109,7 @@ class SessionStorage {
         final token = await _storage.read(key: _keyToken);
         final schoolName =
             await _storage.read(key: _keySchoolName) ??
-            'SMP Negeri 3 Kedungreja';
+            AppConfig.appName;
         final schoolLogoUrl = await _storage.read(key: _keySchoolLogoUrl);
         final schoolLogoBase64 = await _storage.read(key: _keySchoolLogoBase64);
 
