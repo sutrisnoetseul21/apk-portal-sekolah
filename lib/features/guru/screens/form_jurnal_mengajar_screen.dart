@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_colors.dart';
-import 'widgets/form_jurnal/sections/form_jurnal_header.dart';
-import 'widgets/form_jurnal/sections/form_jurnal_sticky_bottom_bar.dart';
-import 'widgets/form_jurnal/steps/step1_parameter_kbm_card.dart';
-import 'widgets/form_jurnal/steps/step2_materi_refleksi_card.dart';
-import 'widgets/form_jurnal/steps/step3_presensi_siswa_card.dart';
 
 /// Halaman Form Tambah & Edit Jurnal Mengajar
 /// Mengikuti 100% aturan bisnis JurnalMengajarForm.php (/portal-guru/jurnal-mengajar/tambah & edit)
@@ -76,6 +71,8 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
 
   // Tema Warna Indigo-Purple Jurnal Mengajar
   static const Color _indigoPrimary = Color(0xFF4F46E5);
+  static const Color _indigoDark = Color(0xFF3730A3);
+  static const Color _purpleAccent = Color(0xFF7C3AED);
 
   @override
   void initState() {
@@ -430,6 +427,7 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
   }
 
   Future<void> _saveJurnal() async {
+    // Validasi Frontend
     if (_selectedMapelId == null) {
       _showSnackBar('Pilih Mata Pelajaran terlebih dahulu.', isError: true);
       return;
@@ -465,7 +463,7 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
           'student_id': sId,
           'status_gerbang': s['status_gerbang'],
           'status_jurnal': s['status_jurnal'],
-          'status_absen_manual': s['manual_status'],
+          'status_absen_manual': s['manual_status'], // 'hadir' | 'telat' | 'izin' | 'sakit' | 'alpa'
           'diabsenkan_telat': s['manual_status'] == 'telat' || (s['diabsenkan_telat'] == true && s['manual_status'] == null),
           'keterangan': noteText,
         };
@@ -571,56 +569,13 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      FormJurnalHeader(isEdit: _isEdit),
+                      _buildHeroHeaderCard(),
                       const SizedBox(height: 16),
-                      Step1ParameterKbmCard(
-                        teacherName: _teacherName,
-                        tanggal: _tanggal,
-                        tanggalFormatted: _tanggalFormatted,
-                        onPickTanggalKbm: _pickTanggalKbm,
-                        isSingleMapel: _isSingleMapel,
-                        availableMapels: _availableMapels,
-                        selectedMapelId: _selectedMapelId,
-                        onMapelChanged: (v) {
-                          setState(() => _selectedMapelId = v);
-                          _checkAutoSelectClassAndLoadStudents();
-                        },
-                        classesForMapel: _filteredClassesForSelectedMapel,
-                        selectedClassId: _selectedClassId,
-                        onClassChanged: (v) {
-                          setState(() => _selectedClassId = v);
-                          _loadStudentsAndGateAttendance();
-                        },
-                        jamMulai: _jamMulai,
-                        durasiJp: _durasiJp,
-                        durasiMenit: _durasiMenit,
-                        jamKeLabel: _jamKeLabel,
-                        onJamMulaiChanged: (v) => setState(() => _jamMulai = v),
-                        onDurasiJpChanged: (v) => setState(() => _durasiJp = v),
-                      ),
+                      _buildStep1ParameterCard(),
                       const SizedBox(height: 16),
-                      Step2MateriRefleksiCard(
-                        materiController: _materiController,
-                        uraianController: _uraianController,
-                        refleksiController: _refleksiController,
-                      ),
+                      _buildStep2MateriRefleksiCard(),
                       const SizedBox(height: 16),
-                      Step3PresensiSiswaCard(
-                        students: _students,
-                        isLoadingStudents: _isLoadingStudents,
-                        studentSearchController: _studentSearchController,
-                        studentSearchQuery: _studentSearchQuery,
-                        onSearchChanged: (v) =>
-                            setState(() => _studentSearchQuery = v.trim()),
-                        onClearSearch: () {
-                          _studentSearchController.clear();
-                          setState(() => _studentSearchQuery = '');
-                        },
-                        onMarkAllHadir: _markAllHadir,
-                        noteControllers: _noteControllers,
-                        onSetStatusJurnal: _setStatusJurnal,
-                        onSetManualStatusBelumAbsen: _setManualStatusBelumAbsen,
-                      ),
+                      _buildStep3StudentAttendanceCard(),
                     ],
                   ),
                 ),
@@ -628,15 +583,2107 @@ class _FormJurnalMengajarScreenState extends State<FormJurnalMengajarScreen> {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: FormJurnalStickyBottomBar(
-                    isSaving: _isSaving,
-                    isEdit: _isEdit,
-                    onCancel: () => Navigator.of(context).pop(),
-                    onSave: _saveJurnal,
+                  child: _buildStickyBottomBar(),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildHeroHeaderCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_indigoPrimary, _indigoDark, _purpleAccent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: _indigoPrimary.withValues(alpha: 0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.circle, size: 7, color: Color(0xFF34D399)),
+                    SizedBox(width: 6),
+                    Text(
+                      'PRESENSI & JURNAL DIGITAL KBM',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_isEdit)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFFCD34D).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: const Text(
+                    'MODE EDIT',
+                    style: TextStyle(
+                      color: Color(0xFFFEF3C7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _isEdit ? 'Perbarui Jurnal Mengajar' : 'Tulis Jurnal Mengajar',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Dokumentasi agenda pembelajaran, kalkulasi JP otomatis, dan sinkronisasi langsung dengan kehadiran gerbang sekolah.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.4,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep1ParameterCard() {
+    final classesForMapel = _filteredClassesForSelectedMapel;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Langkah 01
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [_indigoPrimary, _purpleAccent],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '01',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Parameter Pembelajaran & Jadwal Waktu',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Tentukan mata pelajaran, kelas rombel, serta durasi jam pelajaran.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 26),
+
+          // 1. Guru Pengampu (Read-Only)
+          const Text(
+            'GURU PENGAMPU',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 16,
+                  color: Color(0xFF64748B),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _teacherName,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'AKTIF',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF475569),
+                    ),
                   ),
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 14),
+
+          // 2. Tanggal Pelaksanaan KBM
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'TANGGAL KBM *',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _indigoPrimary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'Format Indonesia',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: _indigoPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          InkWell(
+            onTap: _pickTanggalKbm,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 16,
+                    color: _indigoPrimary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _tanggalFormatted.isNotEmpty
+                          ? _tanggalFormatted
+                          : _tanggal,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 3. Mata Pelajaran (Dipilih Dulu)
+          const Text(
+            'MATA PELAJARAN *',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (_isSingleMapel && _availableMapels.length == 1)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFECFDF5), Color(0xFFF0FDFA)],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF6EE7B7)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.circle, size: 8, color: Color(0xFF10B981)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '${_availableMapels.first['nama_mapel'] ?? '-'}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF064E3B),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFA7F3D0),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'OTOMATIS',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF065F46),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value:
+                      _availableMapels.any(
+                        (m) => int.tryParse('${m['id']}') == _selectedMapelId,
+                      )
+                      ? _selectedMapelId
+                      : null,
+                  isExpanded: true,
+                  hint: const Text(
+                    '-- Pilih Mata Pelajaran --',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  items: _availableMapels.map((m) {
+                    final mId = int.tryParse('${m['id']}') ?? 0;
+                    return DropdownMenuItem<int>(
+                      value: mId,
+                      child: Text(
+                        '${m['nama_mapel'] ?? '-'}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedMapelId = val;
+                      _selectedClassId = null;
+                      _students = [];
+                    });
+                    _checkAutoSelectClassAndLoadStudents();
+                  },
+                ),
+              ),
+            ),
+          const SizedBox(height: 14),
+
+          // 4. Kelas Rombel (Dependent pada Mapel)
+          const Text(
+            'KELAS ROMBEL *',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (_selectedMapelId == null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Text(
+                '-- Pilih Mapel Terlebih Dahulu --',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value:
+                      classesForMapel.any(
+                        (c) => '${c['id']}' == _selectedClassId,
+                      )
+                      ? _selectedClassId
+                      : null,
+                  isExpanded: true,
+                  hint: const Text(
+                    '-- Pilih Kelas Rombel --',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  items: classesForMapel.map((c) {
+                    final cId = '${c['id']}';
+                    return DropdownMenuItem<String>(
+                      value: cId,
+                      child: Text(
+                        '${c['name'] ?? '-'}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() => _selectedClassId = val);
+                    _loadStudentsAndGateAttendance();
+                  },
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 18),
+
+          // SMART JP CALCULATOR STRIP
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Kotak 1: Jam Mulai (Ke-) 1 s/d 9
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: _indigoPrimary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  '1',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: _indigoPrimary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Jam Mulai (Ke-)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _indigoPrimary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Jam Ke-$_jamMulai',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w900,
+                                color: _indigoPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: List.generate(9, (idx) {
+                          final jamOpt = idx + 1;
+                          final isSelected = _jamMulai == jamOpt;
+                          return Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: idx < 8 ? 4.0 : 0,
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _jamMulai = jamOpt);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  height: 38,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    gradient: isSelected
+                                        ? const LinearGradient(
+                                            colors: [
+                                              _indigoPrimary,
+                                              _purpleAccent,
+                                            ],
+                                          )
+                                        : null,
+                                    color: isSelected
+                                        ? null
+                                        : const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? _indigoPrimary
+                                          : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '$jamOpt',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Kotak 2: Durasi Pembelajaran 1 s/d 5 JP
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: _purpleAccent.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  '2',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: _purpleAccent,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Durasi Pembelajaran',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFFA7F3D0),
+                              ),
+                            ),
+                            child: const Text(
+                              '40 Menit / JP',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF047857),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: List.generate(5, (idx) {
+                          final jpOpt = idx + 1;
+                          final isSelected = _durasiJp == jpOpt;
+                          return Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: idx < 4 ? 6.0 : 0,
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _durasiJp = jpOpt);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  height: 38,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    gradient: isSelected
+                                        ? const LinearGradient(
+                                            colors: [
+                                              _indigoPrimary,
+                                              _purpleAccent,
+                                            ],
+                                          )
+                                        : null,
+                                    color: isSelected
+                                        ? null
+                                        : const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? _indigoPrimary
+                                          : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '$jpOpt JP',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Kotak 3: Hasil Kalkulasi Jadwal
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_indigoPrimary, _purpleAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.access_time_filled_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'RENTANG KBM TERJADWAL',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white70,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _jamKeLabel,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '$_durasiMenit Menit',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '$_durasiJp JP × 40 mnt',
+                              style: const TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep2MateriRefleksiCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Langkah 02
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [_purpleAccent, _indigoPrimary],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '02',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dokumentasi Materi Pokok & Refleksi KBM',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Uraikan capaian pembelajaran, aktivitas kelas, serta catatan evaluasi.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 26),
+
+          // Materi Pokok
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'MATERI POKOK / BAB / TOPIK *',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                'Wajib diisi',
+                style: TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _materiController,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText:
+                  'Contoh: Bab 3 - Persamaan Linier Dua Variabel (SPLDV)',
+              hintStyle: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF94A3B8),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: _indigoPrimary, width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Uraian Aktivitas KBM
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'URAIAN AKTIVITAS KBM & PENUGASAN *',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                'Min. 5 karakter',
+                style: TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _uraianController,
+            maxLines: 3,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textPrimary,
+              height: 1.4,
+            ),
+            decoration: InputDecoration(
+              hintText:
+                  'Deskripsikan secara ringkas kegiatan pembelajaran: apersepsi, penyampaian materi, diskusi kelompok, praktikum, atau tugas latihan...',
+              hintStyle: const TextStyle(
+                fontSize: 12.5,
+                color: Color(0xFF94A3B8),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.all(14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: _indigoPrimary, width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Refleksi Guru (Opsional)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 17,
+                      color: Color(0xFFD97706),
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Refleksi / Catatan Tindak Lanjut Guru (Opsional)',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF78350F),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _refleksiController,
+                  maxLines: 2,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                    height: 1.4,
+                  ),
+                  decoration: InputDecoration(
+                    hintText:
+                        'Catatan evaluasi ketercapaian kelas, siswa yang perlu remedial, kedisiplinan, atau rencana sesi berikutnya...',
+                    hintStyle: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.all(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFCD34D)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFCD34D)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFD97706),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep3StudentAttendanceCard() {
+    final filteredStudents = <MapEntry<int, Map<String, dynamic>>>[];
+    for (var i = 0; i < _students.length; i++) {
+      final s = _students[i];
+      if (_studentSearchQuery.isNotEmpty) {
+        final q = _studentSearchQuery.toLowerCase();
+        final name = '${s['name'] ?? ''}'.toLowerCase();
+        final nis = '${s['nis'] ?? ''}'.toLowerCase();
+        if (!name.contains(q) && !nis.contains(q)) continue;
+      }
+      filteredStudents.add(MapEntry(i, s));
+    }
+
+    int hadirCount = 0;
+    int tidakMengikutiCount = 0;
+    for (final s in _students) {
+      if ('${s['status_jurnal']}' == 'hadir') {
+        hadirCount++;
+      } else {
+        tidakMengikutiCount++;
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Langkah 03
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF0D9488)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '03',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Flexible(
+                          child: Text(
+                            'Presensi Siswa di Jam KBM',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${_students.length} Siswa',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF065F46),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Terintegrasi otomatis dengan presensi gerbang. Siswa sakit/izin/alpa dikunci demi validitas.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+
+          // Live Status Legend Chips
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  'PETUNJUK:',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                _buildLegendChip(
+                  'Hadir Tepat Waktu',
+                  const Color(0xFF10B981),
+                  const Color(0xFFECFDF5),
+                ),
+                _buildLegendChip(
+                  'Telat Gerbang',
+                  const Color(0xFFF59E0B),
+                  const Color(0xFFFFFBEB),
+                ),
+                _buildLegendChip(
+                  'Belum Scan Gerbang',
+                  const Color(0xFF64748B),
+                  const Color(0xFFF1F5F9),
+                ),
+                _buildLegendChip(
+                  'Sakit/Izin/Alpa (Terkunci)',
+                  const Color(0xFFE11D48),
+                  const Color(0xFFFFF1F2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          if (_isLoadingStudents)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(
+                child: CircularProgressIndicator(color: _indigoPrimary),
+              ),
+            )
+          else if (_students.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.groups_2_outlined,
+                    size: 40,
+                    color: _indigoPrimary,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Daftar Siswa Belum Dimuat',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Silakan pilih Kelas Rombel pada Langkah 01 di atas untuk memuat seluruh peserta didik aktif dan presensi gerbangnya.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            // Ringkasan Cepat + Tombol Tandai Semua Hadir KBM
+            Row(
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        'Hadir KBM: $hadirCount',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF059669),
+                        ),
+                      ),
+                      Text(
+                        '• Tidak Hadir: $tidakMengikutiCount',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFE11D48),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _markAllHadir,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.done_all_rounded, size: 15),
+                  label: const Text(
+                    'Tandai Semua Hadir KBM',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Pencarian Siswa di Kelas
+            TextField(
+              controller: _studentSearchController,
+              onChanged: (v) => setState(() => _studentSearchQuery = v.trim()),
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Cari nama atau NIS siswa di kelas ini...',
+                hintStyle: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                suffixIcon: _studentSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 16),
+                        onPressed: () {
+                          _studentSearchController.clear();
+                          setState(() => _studentSearchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Daftar Kartu Siswa
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filteredStudents.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, idx) {
+                final entry = filteredStudents[idx];
+                return _buildStudentAttendanceItem(
+                  entry.key,
+                  entry.value,
+                  idx + 1,
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendChip(String label, Color dotColor, Color bgColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: dotColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: dotColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManualStatusChip({
+    required String label,
+    required String value,
+    required String? currentValue,
+    required Color activeBg,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = currentValue == value;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? activeBg : const Color(0xFFCBD5E1),
+            width: isSelected ? 1.4 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeBg.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              size: 13,
+              color: isSelected ? Colors.white : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.white : const Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStudentAttendanceItem(
+    int realIndex,
+    Map<String, dynamic> item,
+    int displayNo,
+  ) {
+    final sId = '${item['student_id']}';
+    final name = '${item['name'] ?? '-'}';
+    final nis = '${item['nis'] ?? '-'}';
+    final statusGerbang = '${item['status_gerbang'] ?? 'belum_absen'}';
+    final statusJurnal = '${item['status_jurnal'] ?? 'hadir'}';
+    final isLocked = item['is_locked'] == true;
+    final manualStatus = item['manual_status'] as String?;
+    final diabsenkanTelat = item['diabsenkan_telat'] == true || manualStatus == 'telat';
+
+    final initials = name.trim().isNotEmpty
+        ? name
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+              .join()
+        : 'S';
+
+    // Badge Status Gerbang Pagi
+    String gateLabel = '⚪ Belum Scan';
+    Color gateBg = const Color(0xFFF1F5F9);
+    Color gateFg = const Color(0xFF475569);
+    if (statusGerbang == 'hadir') {
+      gateLabel = '✓ Tepat Waktu';
+      gateBg = const Color(0xFFECFDF5);
+      gateFg = const Color(0xFF065F46);
+    } else if (statusGerbang == 'telat') {
+      gateLabel = '⏰ Telat di Gerbang';
+      gateBg = const Color(0xFFFFFBEB);
+      gateFg = const Color(0xFF92400E);
+    } else if (statusGerbang == 'izin') {
+      gateLabel = '✉️ Izin Resmi';
+      gateBg = const Color(0xFFEFF6FF);
+      gateFg = const Color(0xFF1E40AF);
+    } else if (statusGerbang == 'sakit') {
+      gateLabel = '🩺 Sakit';
+      gateBg = const Color(0xFFF5F3FF);
+      gateFg = const Color(0xFF5B21B6);
+    } else if (statusGerbang == 'alpa') {
+      gateLabel = '✕ Alpa';
+      gateBg = const Color(0xFFFFF1F2);
+      gateFg = const Color(0xFF9F1239);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: isLocked ? const Color(0xFFFFF1F2).withValues(alpha: 0.45) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isLocked
+              ? const Color(0xFFFECDD3)
+              : (statusJurnal == 'tidak_mengikuti'
+                    ? const Color(0xFFFDA4AF)
+                    : AppColors.border),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Nomor + Initials Avatar
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: _indigoPrimary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _indigoPrimary.withValues(alpha: 0.2),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  initials,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: _indigoPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$displayNo. $name',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'NIS/NISN: $nis',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: gateBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: gateFg.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  gateLabel,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: gateFg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Baris Aksi Kehadiran Jam KBM
+          if (isLocked)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.lock_rounded,
+                    size: 15,
+                    color: Color(0xFFE11D48),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tidak Mengikuti (Terkunci • Tercatat ${statusGerbang.toUpperCase()} di gerbang pagi)',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (statusGerbang == 'belum_absen')
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: manualStatus == null
+                    ? const Color(0xFFF8FAFC)
+                    : (manualStatus == 'hadir'
+                        ? const Color(0xFFECFDF5)
+                        : manualStatus == 'telat'
+                            ? const Color(0xFFFFFBEB)
+                            : manualStatus == 'izin'
+                                ? const Color(0xFFEFF6FF)
+                                : manualStatus == 'sakit'
+                                    ? const Color(0xFFF5F3FF)
+                                    : const Color(0xFFFFF1F2)),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: manualStatus == null
+                      ? const Color(0xFFE2E8F0)
+                      : (manualStatus == 'hadir'
+                          ? const Color(0xFFA7F3D0)
+                          : manualStatus == 'telat'
+                              ? const Color(0xFFFDE68A)
+                              : manualStatus == 'izin'
+                                  ? const Color(0xFFBFDBFE)
+                                  : manualStatus == 'sakit'
+                                      ? const Color(0xFFDDD6FE)
+                                      : const Color(0xFFFECDD3)),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'PILIH STATUS KEHADIRAN (BELUM SCAN PAGI):',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      if (manualStatus != null)
+                        InkWell(
+                          onTap: () => _setManualStatusBelumAbsen(realIndex, null),
+                          borderRadius: BorderRadius.circular(6),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.refresh_rounded, size: 12, color: Color(0xFF64748B)),
+                                SizedBox(width: 2),
+                                Text(
+                                  'Reset',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 5 Pilihan Status Bebas untuk Guru
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _buildManualStatusChip(
+                        label: 'Hadir',
+                        value: 'hadir',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFF059669),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'hadir'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Telat',
+                        value: 'telat',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFFD97706),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'telat'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Izin',
+                        value: 'izin',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFF2563EB),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'izin'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Sakit',
+                        value: 'sakit',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFF7C3AED),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'sakit'),
+                      ),
+                      _buildManualStatusChip(
+                        label: 'Alpa',
+                        value: 'alpa',
+                        currentValue: manualStatus,
+                        activeBg: const Color(0xFFDC2626),
+                        onTap: () => _setManualStatusBelumAbsen(realIndex, 'alpa'),
+                      ),
+                    ],
+                  ),
+
+                  // Feedback / Catatan Konfirmasi Pilihan
+                  const SizedBox(height: 8),
+                  if (manualStatus == null)
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 13,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Siswa belum memiliki status. Klik salah satu status di atas.',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (manualStatus == 'hadir')
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 13,
+                          color: Color(0xFF059669),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Dicatat HADIR di gerbang & Mengikuti Jam KBM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF047857),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (manualStatus == 'telat')
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_filled_rounded,
+                          size: 13,
+                          color: Color(0xFFD97706),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Dicatat TELAT di gerbang & Mengikuti Jam KBM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.cancel_rounded,
+                          size: 13,
+                          color: manualStatus == 'izin'
+                              ? const Color(0xFF2563EB)
+                              : manualStatus == 'sakit'
+                                  ? const Color(0xFF7C3AED)
+                                  : const Color(0xFFDC2626),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Dicatat ${manualStatus.toUpperCase()} di presensi sekolah & Tidak Mengikuti KBM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: manualStatus == 'izin'
+                                  ? const Color(0xFF1E40AF)
+                                  : manualStatus == 'sakit'
+                                      ? const Color(0xFF5B21B6)
+                                      : const Color(0xFF991B1B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            )
+          else
+            Row(
+              children: [
+                const Text(
+                  'Kehadiran KBM:',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _setStatusJurnal(realIndex, 'hadir'),
+                            borderRadius: BorderRadius.circular(9),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 7),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: statusJurnal == 'hadir'
+                                    ? const Color(0xFF059669)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Text(
+                                '✓ Hadir',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: statusJurnal == 'hadir'
+                                      ? Colors.white
+                                      : const Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _setStatusJurnal(
+                              realIndex,
+                              'tidak_mengikuti',
+                            ),
+                            borderRadius: BorderRadius.circular(9),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 7),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: statusJurnal == 'tidak_mengikuti'
+                                    ? const Color(0xFFE11D48)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Text(
+                                '✕ Tidak Hadir',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: statusJurnal == 'tidak_mengikuti'
+                                      ? Colors.white
+                                      : const Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+          // Input Catatan / Alasan jika tidak terkunci
+          if (!isLocked &&
+              (statusJurnal == 'tidak_mengikuti' ||
+                  (_noteControllers[sId]?.text.isNotEmpty ?? false))) ...[
+            const SizedBox(height: 8),
+            TextField(
+              controller: _noteControllers[sId],
+              style: const TextStyle(fontSize: 12),
+              decoration: InputDecoration(
+                hintText: statusJurnal == 'tidak_mengikuti'
+                    ? 'Alasan tidak mengikuti KBM (misal: Izin UKS, Bolos)...'
+                    : 'Catatan khusus siswa (opsional)...',
+                hintStyle: const TextStyle(
+                  fontSize: 11.5,
+                  color: Color(0xFF94A3B8),
+                ),
+                filled: true,
+                fillColor: statusJurnal == 'tidak_mengikuti'
+                    ? const Color(0xFFFFF1F2)
+                    : const Color(0xFFF8FAFC),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: statusJurnal == 'tidak_mengikuti'
+                        ? const Color(0xFFFDA4AF)
+                        : AppColors.border,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: statusJurnal == 'tidak_mengikuti'
+                        ? const Color(0xFFFDA4AF)
+                        : AppColors.border,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStickyBottomBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        border: const Border(top: BorderSide(color: AppColors.border)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            OutlinedButton(
+              onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF334155),
+                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                'Batal',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _isSaving ? null : _saveJurnal,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _indigoPrimary,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check_rounded, size: 18),
+                label: Text(
+                  _isSaving
+                      ? 'Menyimpan Jurnal...'
+                      : (_isEdit
+                            ? 'Simpan Perubahan Jurnal'
+                            : 'Simpan Jurnal Mengajar'),
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

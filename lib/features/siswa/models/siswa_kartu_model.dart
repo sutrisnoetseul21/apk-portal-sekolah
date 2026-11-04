@@ -1,5 +1,3 @@
-import '../../../core/config/app_config.dart';
-
 class SiswaKartuDigitalInfo {
   final String studentId;
   final String name;
@@ -62,10 +60,7 @@ class SiswaKartuDigitalInfo {
       photoUrl: json['photo_url']?.toString(),
       barcodeCode: json['barcode_code']?.toString() ?? '',
       barcodeActive: json['barcode_active'] == true,
-      schoolName: json['school_name']?.toString() ??
-          json['nama_sekolah']?.toString() ??
-          json['name']?.toString() ??
-          AppConfig.appName,
+      schoolName: json['school_name']?.toString() ?? 'SMP Negeri 3 Kedungreja',
       schoolAddress: json['school_address']?.toString() ?? '-',
       schoolLogoUrl: json['school_logo_url']?.toString(),
       principalName: json['principal_name']?.toString() ?? 'Kepala Sekolah',

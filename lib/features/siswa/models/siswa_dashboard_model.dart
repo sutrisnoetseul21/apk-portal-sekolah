@@ -1,5 +1,3 @@
-import '../../../core/config/app_config.dart';
-
 /// Model Ringkasan Profil Siswa
 class SiswaProfileInfo {
   final String id;
@@ -163,20 +161,10 @@ class SiswaDashboardSummary {
     final sholatJson = json['today_sholat'] is Map<String, dynamic> ? json['today_sholat'] as Map<String, dynamic> : <String, dynamic>{};
     final quickStatsJson = json['quick_stats'] is Map<String, dynamic> ? json['quick_stats'] as Map<String, dynamic> : <String, dynamic>{};
 
-    final rawSchoolName = schoolJson['name']?.toString() ??
-        schoolJson['nama_sekolah']?.toString() ??
-        schoolJson['school_name']?.toString();
-    final effectiveSchoolName = (rawSchoolName != null && rawSchoolName.trim().isNotEmpty)
-        ? rawSchoolName.trim()
-        : AppConfig.appName;
-
-    final rawSchoolLogoUrl = schoolJson['logo_url']?.toString() ??
-        schoolJson['school_logo_url']?.toString();
-
     return SiswaDashboardSummary(
       student: SiswaProfileInfo.fromJson(studentJson),
-      schoolName: effectiveSchoolName,
-      schoolLogoUrl: rawSchoolLogoUrl,
+      schoolName: schoolJson['name']?.toString() ?? 'SMP Negeri 3 Kedungreja',
+      schoolLogoUrl: schoolJson['logo_url']?.toString(),
       todayAttendance: SiswaTodayAttendance.fromJson(attendanceJson),
       todaySholat: SiswaTodaySholat.fromJson(sholatJson),
       quickStats: SiswaQuickStats.fromJson(quickStatsJson),
