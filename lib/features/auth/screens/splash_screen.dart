@@ -114,9 +114,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       FcmService.instance.registerTokenWithBackend(token: savedSession.token);
       FcmService.instance.checkInitialMessage();
 
-      final targetSchool = _schoolName.isNotEmpty
+      final targetSchool = (_schoolName.isNotEmpty && _schoolName != AppConfig.appName)
           ? _schoolName
-          : savedSession.schoolName;
+          : (savedSession.schoolName.isNotEmpty
+              ? savedSession.schoolName
+              : (_schoolName.isNotEmpty ? _schoolName : AppConfig.appName));
       final logoUrl = _logoUrl ?? savedSession.schoolLogoUrl;
       final logoBase64 = _logoBase64 ?? savedSession.schoolLogoBase64;
 

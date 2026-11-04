@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:apk_portal_smpn1_sampang/core/widgets/keyboard_aware_sheet.dart';
 import '../../../models/konsultasi_guru_wali_model.dart';
 import '../../../services/guru_wali_service.dart';
 
@@ -193,61 +194,63 @@ class _ChatKonsultasiSheetState extends State<ChatKonsultasiSheet> {
                   Text('Jadwalkan Tatap Muka', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 ],
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Pilih Waktu Pertemuan:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: ctx,
-                              initialDate: selectedDate,
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 30)),
-                            );
-                            if (picked != null) {
-                              setDialogState(() => selectedDate = picked);
-                            }
-                          },
-                          child: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Pilih Waktu Pertemuan:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: ctx,
+                                initialDate: selectedDate,
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(const Duration(days: 30)),
+                              );
+                              if (picked != null) {
+                                setDialogState(() => selectedDate = picked);
+                              }
+                            },
+                            child: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            final picked = await showTimePicker(
-                              context: ctx,
-                              initialTime: selectedTime,
-                            );
-                            if (picked != null) {
-                              setDialogState(() => selectedTime = picked);
-                            }
-                          },
-                          child: Text(selectedTime.format(ctx)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              final picked = await showTimePicker(
+                                context: ctx,
+                                initialTime: selectedTime,
+                              );
+                              if (picked != null) {
+                                setDialogState(() => selectedTime = picked);
+                              }
+                            },
+                            child: Text(selectedTime.format(ctx)),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Pesan / Catatan untuk Murid:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: catatanController,
-                    maxLines: 2,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: 'Misal: Temui Bapak di ruang guru pada jam istirahat pertama...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    const Text('Pesan / Catatan untuk Murid:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: catatanController,
+                      maxLines: 2,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        hintText: 'Misal: Temui Bapak di ruang guru pada jam istirahat pertama...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
@@ -318,22 +321,24 @@ class _ChatKonsultasiSheetState extends State<ChatKonsultasiSheet> {
               Text('Tolak Permohonan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Alasan Penolakan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: alasanController,
-                maxLines: 3,
-                style: const TextStyle(fontSize: 12),
-                decoration: InputDecoration(
-                  hintText: 'Jelaskan alasan penolakan bimbingan ini kepada murid...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Alasan Penolakan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: alasanController,
+                  maxLines: 3,
+                  style: const TextStyle(fontSize: 12),
+                  decoration: InputDecoration(
+                    hintText: 'Jelaskan alasan penolakan bimbingan ini kepada murid...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
@@ -519,14 +524,9 @@ class _ChatKonsultasiSheetState extends State<ChatKonsultasiSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.92,
-      ),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return KeyboardAwareSheet(
+      backgroundColor: const Color(0xFFF8FAFC),
+      maxHeightFactor: 0.92,
       child: Column(
         children: [
           // Drag handle
@@ -929,6 +929,11 @@ class _ChatKonsultasiSheetState extends State<ChatKonsultasiSheet> {
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
+                  onTap: () {
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (mounted) _scrollToBottom();
+                    });
+                  },
                   onSubmitted: (_) => _kirimPesan(),
                 ),
               ),

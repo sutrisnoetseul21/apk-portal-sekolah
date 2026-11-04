@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:apk_portal_smpn1_sampang/core/widgets/keyboard_aware_sheet.dart';
 import '../../../models/pemantauan_bulanan_model.dart';
 import '../../../services/guru_wali_service.dart';
 
@@ -54,14 +55,9 @@ class _ModalPemantauanSheetState extends State<ModalPemantauanSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return KeyboardAwareSheet(
+      backgroundColor: Colors.white,
+      maxHeightFactor: 0.90,
       child: Column(
         children: [
           // Drag handle
