@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -138,14 +139,14 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
         noHp: _noHpController.text.trim(),
       );
 
+      await _loadProfil();
+
       if (mounted) {
         setState(() {
           _isSavingKontak = false;
-          if (res.data != null) {
-            _profil = res.data;
-          }
         });
 
+        final msg = res['message']?.toString() ?? 'Alamat & nomor HP berhasil diperbarui!';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -154,9 +155,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    res.message.isNotEmpty
-                        ? res.message
-                        : 'Alamat & nomor HP berhasil diperbarui!',
+                    msg,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -210,17 +209,16 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
 
       setState(() => _isUploadingFoto = true);
 
-      final res = await _service.uploadPhoto(
+      await _service.updateFoto(
+        photoFile: File(compressed.file.path),
         identifier: widget.identifier,
-        photoPath: compressed.file.path,
       );
+
+      await _loadProfil();
 
       if (mounted) {
         setState(() {
           _isUploadingFoto = false;
-          if (res.data != null) {
-            _profil = res.data;
-          }
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +229,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    res.message.isNotEmpty ? res.message : 'Foto profil berhasil diunggah!',
+                    'Foto profil berhasil diunggah!',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -300,20 +298,19 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
     setState(() => _isUploadingFoto = true);
 
     try {
-      final res = await _service.removePhoto(identifier: widget.identifier);
+      await _service.hapusFoto(identifier: widget.identifier);
+
+      await _loadProfil();
 
       if (mounted) {
         setState(() {
           _isUploadingFoto = false;
-          if (res.data != null) {
-            _profil = res.data;
-          }
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              res.message.isNotEmpty ? res.message : 'Foto profil berhasil dihapus.',
+              'Foto profil berhasil dihapus.',
               style: GoogleFonts.plusJakartaSans(fontSize: 13),
             ),
             backgroundColor: const Color(0xFF059669),
@@ -355,7 +352,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
     setState(() => _isSavingPassword = true);
 
     try {
-      final res = await _service.updatePassword(
+      await _service.updatePassword(
         identifier: widget.identifier,
         currentPassword: _currentPasswordController.text,
         newPassword: _newPasswordController.text,
@@ -378,7 +375,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    res.message.isNotEmpty ? res.message : 'Kata sandi berhasil diperbarui!',
+                    'Kata sandi berhasil diperbarui!',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -465,7 +462,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
     if (confirmed != true) return;
 
     try {
-      await FcmService.instance.unregisterToken();
+      await FcmService.instance.unregisterTokenWithBackend();
       await SessionStorage.clearSession();
 
       if (mounted) {

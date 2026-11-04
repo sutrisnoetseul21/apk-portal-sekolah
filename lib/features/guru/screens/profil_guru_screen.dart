@@ -134,15 +134,16 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
       final noHp = _noHpController.text.trim();
       final microsite = _micrositeController.text.trim();
 
-      final updatedData = await _service.updateContact(
+      await _service.updateContact(
         email: email,
         noHp: noHp,
         micrositeUrl: microsite.isNotEmpty ? microsite : null,
       );
 
+      await _fetchProfile();
+
       if (mounted) {
         setState(() {
-          _profilData = updatedData;
           _isSavingContact = false;
         });
 
@@ -613,7 +614,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
     if (confirm != true) return;
 
     try {
-      await FcmService.instance.unregisterToken();
+      await FcmService.instance.unregisterTokenWithBackend();
       await SessionStorage.clearSession();
 
       if (mounted) {

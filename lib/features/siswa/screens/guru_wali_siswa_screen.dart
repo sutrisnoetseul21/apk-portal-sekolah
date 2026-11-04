@@ -198,7 +198,7 @@ class _GuruWaliSiswaScreenState extends State<GuruWaliSiswaScreen>
         ),
       ),
     ).then((res) {
-      if (res == true) {
+      if (res == true && mounted) {
         _refreshKonsultasi();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
