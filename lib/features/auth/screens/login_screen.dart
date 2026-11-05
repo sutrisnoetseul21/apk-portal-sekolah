@@ -72,10 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
       } catch (_) {}
     }
 
-    // Muat data jika belum dioper dari splash screen
-    if (_logoBytes == null && _logoUrl == null) {
-      _fetchSchoolInfo();
-    }
+    // Muat data jika belum dioper dari splash screen atau sinkronkan data sekolah
+    _loadCachedOrFetchSchoolInfo();
   }
 
   @override
@@ -83,6 +81,28 @@ class _LoginScreenState extends State<LoginScreen> {
     _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  /// Memuat info sekolah dari cache lokal terlebih dahulu, lalu sinkronkan dari API
+  Future<void> _loadCachedOrFetchSchoolInfo() async {
+    final cached = await SessionStorage.getCachedSchoolInfo();
+    if (mounted && cached['nama_sekolah'] != null && cached['nama_sekolah']!.isNotEmpty) {
+      setState(() {
+        _schoolName = cached['nama_sekolah']!;
+        _logoUrl ??= cached['logo_url'];
+        if (_logoBase64 == null && cached['logo_base64'] != null) {
+          _logoBase64 = cached['logo_base64'];
+          try {
+            final clean = _logoBase64!.contains(',')
+                ? _logoBase64!.split(',').last
+                : _logoBase64!;
+            _logoBytes = base64Decode(clean);
+          } catch (_) {}
+        }
+      });
+    }
+
+    _fetchSchoolInfo();
   }
 
   /// Memuat logo dan nama sekolah secara dinamis dari database Laravel backend
@@ -118,6 +138,13 @@ class _LoginScreenState extends State<LoginScreen> {
               _logoUrl = data['logo_url'];
             }
           });
+
+          // Simpan ke cache lokal perangkat
+          SessionStorage.saveCachedSchoolInfo(
+            schoolName: _schoolName,
+            schoolLogoUrl: _logoUrl,
+            schoolLogoBase64: _logoBase64,
+          );
         }
       }
     } catch (_) {
@@ -305,15 +332,41 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              // Footer Aplikasi Bersih (Tanpa Tombol Ganti Server)
+              // Footer Aplikasi: Opsi 2 (Nama Sekolah Dinamis dari DB + Powered by Hafla IT Solution)
               Center(
-                child: Text(
-                  '© 2026 $_schoolName • Portal Digital',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Portal Digital • $_schoolName',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Powered by ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          'Hafla IT Solution',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),

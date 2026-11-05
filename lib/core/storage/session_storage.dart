@@ -41,6 +41,10 @@ class SessionStorage {
   static const String _keySchoolLogoUrl = 'auth_school_logo_url';
   static const String _keySchoolLogoBase64 = 'auth_school_logo_base64';
 
+  static const String _keyCachedSchoolName = 'cached_school_name';
+  static const String _keyCachedSchoolLogoUrl = 'cached_school_logo_url';
+  static const String _keyCachedSchoolLogoBase64 = 'cached_school_logo_base64';
+
   // Fallback in-memory jika platform web/linux membatasi secure storage
   static SavedUserSession? _memoryFallback;
 
@@ -143,6 +147,41 @@ class SessionStorage {
       await _storage.delete(key: _keySchoolLogoUrl);
       await _storage.delete(key: _keySchoolLogoBase64);
     } catch (_) {}
+  }
+
+  /// Simpan info sekolah (Nama & Logo) secara persisten agar tidak hilang saat logout
+  static Future<void> saveCachedSchoolInfo({
+    required String schoolName,
+    String? schoolLogoUrl,
+    String? schoolLogoBase64,
+  }) async {
+    try {
+      if (schoolName.isNotEmpty) {
+        await _storage.write(key: _keyCachedSchoolName, value: schoolName);
+      }
+      if (schoolLogoUrl != null && schoolLogoUrl.isNotEmpty) {
+        await _storage.write(key: _keyCachedSchoolLogoUrl, value: schoolLogoUrl);
+      }
+      if (schoolLogoBase64 != null && schoolLogoBase64.isNotEmpty) {
+        await _storage.write(key: _keyCachedSchoolLogoBase64, value: schoolLogoBase64);
+      }
+    } catch (_) {}
+  }
+
+  /// Ambil info sekolah yang tersimpan di perangkat
+  static Future<Map<String, String?>> getCachedSchoolInfo() async {
+    try {
+      final name = await _storage.read(key: _keyCachedSchoolName);
+      final logoUrl = await _storage.read(key: _keyCachedSchoolLogoUrl);
+      final logoBase64 = await _storage.read(key: _keyCachedSchoolLogoBase64);
+      return {
+        'nama_sekolah': (name != null && name.trim().isNotEmpty) ? name : null,
+        'logo_url': logoUrl,
+        'logo_base64': logoBase64,
+      };
+    } catch (_) {
+      return {'nama_sekolah': null, 'logo_url': null, 'logo_base64': null};
+    }
   }
 }
 

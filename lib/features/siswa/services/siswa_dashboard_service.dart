@@ -3,6 +3,8 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../models/siswa_dashboard_model.dart';
 import '../models/siswa_akademik_model.dart';
+import '../models/siswa_sholat_model.dart';
+import '../models/siswa_presensi_kbm_model.dart';
 
 /// Service untuk menangani komunikasi REST API Dashboard Portal Siswa
 class SiswaDashboardService {
@@ -77,6 +79,64 @@ class SiswaDashboardService {
     } on DioException catch (e) {
       final serverMsg = e.response?.data?['message'];
       throw Exception(serverMsg ?? 'Terjadi kesalahan jaringan saat memuat kalender presensi (${e.type.name}).');
+    }
+  }
+
+  /// Mengambil data kalender presensi sholat dhuhur bulanan siswa (Menu 1 Tab 2)
+  Future<SiswaSholatDashboardResponse> getSholatDhuhurDashboard({
+    int? month,
+    int? year,
+    String? monthYear,
+    String? identifier,
+  }) async {
+    try {
+      final response = await dio.get(
+        ApiEndpoints.siswaSholatDhuhurDashboard,
+        queryParameters: {
+          'month': ?month,
+          'year': ?year,
+          if (monthYear != null && monthYear.isNotEmpty) 'month_year': monthYear,
+          if (identifier != null && identifier.isNotEmpty) 'identifier': identifier,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final rawData = response.data['data'];
+        final data = rawData is Map<String, dynamic> ? rawData : <String, dynamic>{};
+        return SiswaSholatDashboardResponse.fromJson(data);
+      } else {
+        throw Exception(response.data['message'] ?? 'Gagal memuat data sholat dhuhur siswa.');
+      }
+    } on DioException catch (e) {
+      final serverMsg = e.response?.data?['message'];
+      throw Exception(serverMsg ?? 'Terjadi kesalahan jaringan saat memuat sholat dhuhur (${e.type.name}).');
+    }
+  }
+
+  /// Mengambil data rekapitulasi presensi KBM per mata pelajaran (Menu 1 - Tab 3)
+  Future<SiswaPresensiKbmResponse> getPresensiKbmDashboard({
+    String? monthYear,
+    String? identifier,
+  }) async {
+    try {
+      final response = await dio.get(
+        ApiEndpoints.siswaPresensiKbmDashboard,
+        queryParameters: {
+          if (monthYear != null && monthYear.isNotEmpty) 'month_year': monthYear,
+          if (identifier != null && identifier.isNotEmpty) 'identifier': identifier,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final rawData = response.data['data'];
+        final data = rawData is Map<String, dynamic> ? rawData : <String, dynamic>{};
+        return SiswaPresensiKbmResponse.fromJson(data);
+      } else {
+        throw Exception(response.data['message'] ?? 'Gagal memuat data presensi KBM siswa.');
+      }
+    } on DioException catch (e) {
+      final serverMsg = e.response?.data?['message'];
+      throw Exception(serverMsg ?? 'Terjadi kesalahan jaringan saat memuat presensi KBM (${e.type.name}).');
     }
   }
 }

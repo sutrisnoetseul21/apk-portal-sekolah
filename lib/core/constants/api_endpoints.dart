@@ -17,6 +17,8 @@ class ApiEndpoints {
   // Modul Siswa & Pelajar
   static const String siswaDashboardSummary = '/siswa/dashboard-summary';
   static const String siswaAkademikDashboard = '/siswa/akademik/dashboard';
+  static const String siswaSholatDhuhurDashboard = '/siswa/sholat-dhuhur/dashboard';
+  static const String siswaPresensiKbmDashboard = '/siswa/presensi-kbm/dashboard';
   static const String siswaIjinKehadiran = '/siswa/ijin-kehadiran';
   static const String siswaIjinCheckHolidays = '/siswa/ijin-kehadiran/check-holidays';
   static String siswaIjinDetail(String id) => '/siswa/ijin-kehadiran/$id';

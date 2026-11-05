@@ -31,8 +31,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   final Dio _dio = Dio(
     BaseOptions(
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 5),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {'Accept': 'application/json'},
     ),
   );
@@ -61,6 +61,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   Future<void> _fetchSchoolInfoAndNavigate() async {
     final savedSession = await SessionStorage.getSession();
+
+    // Prioritaskan info sekolah yang tersimpan di cache lokal
+    final cachedInfo = await SessionStorage.getCachedSchoolInfo();
+    if (cachedInfo['nama_sekolah'] != null && cachedInfo['nama_sekolah']!.isNotEmpty) {
+      _schoolName = cachedInfo['nama_sekolah']!;
+      _logoUrl = cachedInfo['logo_url'];
+      _logoBase64 = cachedInfo['logo_base64'];
+      if (_logoBase64 != null && _logoBase64!.isNotEmpty) {
+        try {
+          final cleanBase64 = _logoBase64!.contains(',')
+              ? _logoBase64!.split(',').last
+              : _logoBase64!;
+          _logoBytes = base64Decode(cleanBase64);
+        } catch (_) {}
+      }
+    }
 
     try {
       final response = await _dio.get('${AppConfig.baseUrl}/school-info');
@@ -91,11 +107,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 _schoolName = fetchedName;
               }
               _logoBase64 = fetchedBase64;
-              _logoBytes = decodedBytes;
+              _logoBytes = decodedBytes ?? _logoBytes;
               if (fetchedUrl != null && fetchedUrl.isNotEmpty) {
                 _logoUrl = fetchedUrl;
               }
             });
+
+            // Simpan info sekolah ke cache permanen
+            SessionStorage.saveCachedSchoolInfo(
+              schoolName: _schoolName,
+              schoolLogoUrl: _logoUrl,
+              schoolLogoBase64: _logoBase64,
+            );
           }
         }
       }
@@ -299,12 +322,34 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Powered by ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.75),
+                          ),
+                        ),
+                        const Text(
+                          'Hafla IT Solution',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
                       'Versi ${AppConfig.appVersion}',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.6),
                       ),
                     ),
                   ],

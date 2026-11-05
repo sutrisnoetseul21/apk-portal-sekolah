@@ -492,7 +492,55 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
                 onTapProfil: () => _openProfilMenu(),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+
+              // Footer Aplikasi (Portal Digital • Nama Sekolah + Powered by Hafla IT Solution)
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'Portal Digital • ${widget.schoolName.isNotEmpty ? widget.schoolName : AppConfig.appName}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Powered by ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          'Hafla IT Solution',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Versi ${AppConfig.appVersion}',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
             ],
           ),
         ),

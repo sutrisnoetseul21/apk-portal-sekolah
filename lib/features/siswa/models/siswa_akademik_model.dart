@@ -165,6 +165,8 @@ class SiswaAkademikDashboardResponse {
   final Map<int, SiswaDayAttendance> attendanceMatrix;
   final Map<int, bool> holidays;
   final List<SiswaRecentActivity> recentActivity;
+  final bool enableSholatDhuhur;
+  final bool enablePresensiKbm;
 
   const SiswaAkademikDashboardResponse({
     required this.selectedPeriod,
@@ -173,6 +175,8 @@ class SiswaAkademikDashboardResponse {
     required this.attendanceMatrix,
     required this.holidays,
     required this.recentActivity,
+    this.enableSholatDhuhur = true,
+    this.enablePresensiKbm = true,
   });
 
   factory SiswaAkademikDashboardResponse.fromJson(Map<String, dynamic> json) {
@@ -221,6 +225,8 @@ class SiswaAkademikDashboardResponse {
       attendanceMatrix: matrixMap,
       holidays: holidaysMap,
       recentActivity: recentList,
+      enableSholatDhuhur: json['enable_sholat_dhuhur'] != false,
+      enablePresensiKbm: json['enable_presensi_kbm'] != false,
     );
   }
 }

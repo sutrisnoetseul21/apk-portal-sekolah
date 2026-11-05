@@ -6,13 +6,17 @@ import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_dashboard_m
 class DashboardTodayAttendanceCard extends StatelessWidget {
   final SiswaTodayAttendance? attendance;
   final SiswaTodaySholat? sholat;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final VoidCallback? onTapAttendance;
+  final VoidCallback? onTapSholat;
 
   const DashboardTodayAttendanceCard({
     super.key,
     required this.attendance,
     required this.sholat,
-    required this.onTap,
+    this.onTap,
+    this.onTapAttendance,
+    this.onTapSholat,
   });
 
   @override
@@ -61,18 +65,16 @@ class DashboardTodayAttendanceCard extends StatelessWidget {
       }
     }
 
+    final isSholatEnabled = sholat?.enabled == true;
+
     // Sholat Config
     Color sholatColor = const Color(0xFF64748B);
     IconData sholatIcon = Icons.mosque_outlined;
     String sholatTitle = 'Belum Ada Data';
     String sholatSubtitle = 'Sholat Dhuhur';
 
-    if (sholat != null) {
-      if (!sholat!.enabled) {
-        sholatColor = const Color(0xFF94A3B8);
-        sholatIcon = Icons.info_outline;
-        sholatTitle = 'Non-Aktif';
-      } else if (sholat!.status == 'berjamaah') {
+    if (sholat != null && isSholatEnabled) {
+      if (sholat!.status == 'berjamaah') {
         sholatColor = const Color(0xFF0D9488);
         sholatIcon = Icons.mosque_outlined;
         sholatTitle = 'Berjamaah';
@@ -108,97 +110,163 @@ class DashboardTodayAttendanceCard extends StatelessWidget {
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Status Presensi Pagi
-                Expanded(
+        child: isSholatEnabled
+            ? Row(
+                children: [
+                  // Sisi Kiri: Presensi Masuk
+                  Expanded(
+                    child: InkWell(
+                      onTap: onTapAttendance ?? onTap,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: attColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(attIcon, color: attColor, size: 24),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    attSubtitle,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    attTitle,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: attColor,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Divider Tengah
+                  Container(
+                    height: 36,
+                    width: 1,
+                    color: const Color(0xFFE2E8F0),
+                  ),
+
+                  // Sisi Kanan: Sholat Dhuhur
+                  Expanded(
+                    child: InkWell(
+                      onTap: onTapSholat ?? onTap,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: sholatColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(sholatIcon,
+                                  color: sholatColor, size: 24),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    sholatSubtitle,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    sholatTitle,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: sholatColor,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : InkWell(
+                onTap: onTapAttendance ?? onTap,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: attColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(attIcon, color: attColor, size: 24),
+                        child: Icon(attIcon, color: attColor, size: 26),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               attSubtitle,
-                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               attTitle,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w900,
                                 color: attColor,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                Container(height: 36, width: 1, color: const Color(0xFFE2E8F0)),
-                const SizedBox(width: 12),
-                // Status Sholat Dhuhur
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: sholatColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(sholatIcon, color: sholatColor, size: 24),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              sholatSubtitle,
-                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              sholatTitle,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: sholatColor,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
 }
-
