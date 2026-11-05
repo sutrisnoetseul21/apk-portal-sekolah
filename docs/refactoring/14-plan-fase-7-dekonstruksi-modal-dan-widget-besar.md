@@ -27,12 +27,12 @@ Pada eksekusi **Batch A**, seluruh **8 berkas modal/form raksasa berkisar 750–
 | 6 | `lib/features/guru/screens/widgets/detail_buku_bottom_sheet.dart` | **783** | **187** | ✅ Selesai (Batch A) | Modal Detail/Pinjam |
 | 7 | `lib/features/guru/screens/widgets/form_jurnal/steps/step1_parameter_kbm_card.dart` | **778** | **106** | ✅ Selesai (Batch A) | Form Stepper Card |
 | 8 | `lib/features/guru/screens/widgets/presensi_sholat/modals/modal_sholat_bulk_input.dart` | **767** | **254** | ✅ Selesai (Batch A) | Modal Input Massal |
-| 9 | `lib/features/guru/screens/profil_guru_screen.dart` | **848** | 848 | 🟠 Menunggu (Batch C) | Screen Controller |
+| 9 | `lib/features/guru/screens/profil_guru_screen.dart` | **848** | 700 | 🔄 Sedang Berjalan (Batch C) | Screen Controller |
 | 10 | `lib/features/guru/screens/perpustakaan_screen.dart` | **828** | 828 | 🟠 Menunggu (Batch C) | Screen Controller |
 | 11 | `lib/features/guru/screens/presensi_sholat_dhuhur_screen.dart` | **715** | 715 | 🟠 Menunggu (Batch C) | Screen Controller |
 | 12 | `lib/features/guru/screens/widgets/guru_wali/modal_jurnal_individu.dart` | **710** | 247 | ✅ Selesai (Batch B) | Form Konseling |
-| 13 | `lib/features/siswa/screens/profil_siswa_screen.dart` | **696** | 696 | 🟠 Menunggu (Batch C) | Screen Controller |
-| 14 | `lib/features/guru/screens/detail_presensi_siswa_screen.dart` | **680** | 680 | 🟠 Menunggu (Batch C) | Screen Controller |
+| 13 | `lib/features/siswa/screens/profil_siswa_screen.dart` | **696** | 577 | 🔄 Sedang Berjalan (Batch C) | Screen Controller |
+| 14 | `lib/features/guru/screens/detail_presensi_siswa_screen.dart` | **680** | 184 | ✅ Selesai (Batch C) | Screen Controller |
 | 15 | `lib/features/guru/screens/form_jurnal_mengajar_screen.dart` | **642** | 642 | 🟠 Menunggu (Batch C) | Screen Controller |
 | 16 | `lib/features/guru/screens/widgets/jurnal_mengajar/modals/dialog_cetak_jurnal_periode.dart` | **634** | 168 | ✅ Selesai (Batch B) | Dialog Export/Cetak |
 | 17 | `lib/features/guru/screens/widgets/presensi_sholat/sections/sholat_daily_attendance.dart` | **616** | 616 | 🟡 Menunggu (Batch D) | Section Widget |
@@ -42,7 +42,7 @@ Pada eksekusi **Batch A**, seluruh **8 berkas modal/form raksasa berkisar 750–
 | 21 | `lib/features/siswa/screens/widgets/guru_wali/modals/modal_detail_konsultasi.dart` | **591** | 268 | ✅ Selesai (Batch B) | Modal Siswa |
 | 22 | `lib/features/guru/screens/widgets/presensi_sholat/sections/sholat_stats_section.dart` | **590** | 590 | 🟡 Menunggu (Batch D) | Section Widget |
 | 23 | `lib/features/guru/screens/widgets/presensi_kelas/sections/presensi_daily_attendance.dart` | **588** | 588 | 🟡 Menunggu (Batch D) | Section Widget |
-| 24 | `lib/features/auth/screens/login_screen.dart` | **579** | 579 | 🟠 Menunggu (Batch C) | Screen Controller |
+| 24 | `lib/features/auth/screens/login_screen.dart` | **579** | 327 | ✅ Selesai (Batch C) | Screen Controller |
 | 25 | `lib/features/guru/screens/widgets/presensi_kelas/sections/presensi_stats_section.dart` | **576** | 576 | 🟡 Menunggu (Batch D) | Section Widget |
 | 26 | `lib/features/guru/services/guru_wali_service.dart` | **549** | 549 | ⚪ Tetap (Service Layer) | Service API |
 | 27 | `lib/features/siswa/screens/guru_wali_siswa_screen.dart` | **534** | 534 | 🟢 Menunggu (Batch C) | Screen Controller |
@@ -190,21 +190,32 @@ Berkas-berkas ini sebelumnya bertindak sebagai "mini-screen" raksasa (750–960 
 
 ---
 
-### 🔹 BATCH C: Perampingan Screen Controllers (> 600 Baris)
+### 🔹 BATCH C: Perampingan Screen Controllers (> 600 Baris) (🔄 Sedang Berjalan)
 
-Screen berikut masih memiliki logika dialog inline dan layout scaffold yang cukup tebal:
-1. **`profil_guru_screen.dart` (848 baris)** & **`profil_siswa_screen.dart` (696 baris)**:
-   - Ekstrak dialog ganti password, dialog crop/unggah foto, dan bottom sheet kontak menjadi modul terpisah.
-2. **`perpustakaan_screen.dart` (828 baris)**:
+Proses perampingan screen controller dengan memisahkan dialog interaktif, form state, header branding, dan section terisolasi:
+1. **`detail_presensi_siswa_screen.dart` (680 baris ➔ 184 baris)** (✅ Selesai):
+   - `widgets/detail_presensi/student_presensi_profile_header.dart` (112 baris): Card profil siswa gradien dengan persentase kehadiran.
+   - `widgets/detail_presensi/student_presensi_month_selector.dart` (65 baris): Dropdown pemilih bulan data kehadiran.
+   - `widgets/detail_presensi/student_presensi_stats_row.dart` (63 baris): Row statistik ringkas H/T/I/S/A.
+   - `widgets/detail_presensi/student_presensi_calendar_card.dart` (168 baris): Kalender matriks visual kehadiran bulanan & status libur.
+   - `widgets/detail_presensi/student_presensi_activity_list.dart` (132 baris): Daftar kronologis scan in/out & status badge.
+2. **`login_screen.dart` (579 baris ➔ 327 baris)** (✅ Selesai):
+   - `widgets/login_header_section.dart` (115 baris): Branding logo sekolah (base64/network/asset) & nama sekolah dinamis.
+   - `widgets/login_form_card.dart` (176 baris): Form input credentials username, password toggle, dan tombol login portal.
+3. **`profil_guru_screen.dart` (848 baris ➔ 700 baris)** (🔄 Selesai Tahap 1):
+   - `widgets/profil/dialogs/dialog_konfirmasi_logout.dart` (94 baris): Dialog konfirmasi logout guru.
+   - `widgets/profil/dialogs/dialog_konfirmasi_hapus_foto.dart` (51 baris): Dialog konfirmasi hapus foto profil guru.
+   - `widgets/profil/sections/profil_error_state.dart` (72 baris): Widget penanganan state error profil & tombol coba lagi.
+4. **`profil_siswa_screen.dart` (696 baris ➔ 577 baris)** (🔄 Selesai Tahap 1):
+   - `widgets/profil/dialogs/dialog_konfirmasi_logout_siswa.dart` (89 baris): Dialog konfirmasi logout siswa.
+   - `widgets/profil/dialogs/dialog_konfirmasi_hapus_foto_siswa.dart` (50 baris): Dialog konfirmasi hapus foto profil siswa.
+   - `widgets/profil/sections/profil_siswa_error_state.dart` (68 baris): Widget penanganan state error profil siswa.
+5. **`perpustakaan_screen.dart` (828 baris)**:
    - Ekstrak floating quick search dan filter bar modal keluar dari file screen utama.
-3. **`presensi_sholat_dhuhur_screen.dart` (715 baris)** & **`presensi_kelas_screen.dart` (514 baris)**:
+6. **`presensi_sholat_dhuhur_screen.dart` (715 baris)** & **`presensi_kelas_screen.dart` (514 baris)**:
    - Bersihkan helper konversi waktu dan dialog sinkronisasi manual menjadi controller terpisah.
-4. **`detail_presensi_siswa_screen.dart` (680 baris)**:
-   - Ekstrak kalender matriks bulanan per siswa ke widget terpisah.
-5. **`form_jurnal_mengajar_screen.dart` (642 baris)**:
+7. **`form_jurnal_mengajar_screen.dart` (642 baris)**:
    - Ekstrak stepper progress indicator dan dialog batal form ke komponen terpisah.
-6. **`login_screen.dart` (579 baris)**:
-   - Ekstrak card form credentials, toggle role (Siswa/Guru), dan dialog info bantuan login ke folder `features/auth/screens/widgets/`.
 
 ---
 
@@ -249,6 +260,14 @@ Dalam pelaksanaan Fase 7, prinsip-prinsip berikut wajib dijaga:
   - [x] `modal_detail_konsultasi.dart` (591 ➔ 268 baris)
   - [x] `modal_jurnal_klasikal.dart` (507 ➔ 260 baris)
   - [x] Verifikasi `flutter analyze lib/` (0 Errors)
-- [ ] **Batch C (Screen Controllers >600 baris)**
+- [ ] **Batch C (Screen Controllers >600 baris)**:
+  - [x] `detail_presensi_siswa_screen.dart` (680 ➔ 184 baris)
+  - [x] `login_screen.dart` (579 ➔ 327 baris)
+  - [x] `profil_guru_screen.dart` (848 ➔ 700 baris)
+  - [x] `profil_siswa_screen.dart` (696 ➔ 577 baris)
+  - [x] Verifikasi `flutter analyze lib/` (0 Errors)
+  - [ ] `perpustakaan_screen.dart` (828 baris)
+  - [ ] `presensi_sholat_dhuhur_screen.dart` (715 baris)
+  - [ ] `form_jurnal_mengajar_screen.dart` (642 baris)
 - [ ] **Batch D (Card & Section Widget 570–616 baris)**
 

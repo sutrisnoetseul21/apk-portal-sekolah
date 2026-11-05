@@ -9,7 +9,10 @@ import '../../auth/screens/login_screen.dart';
 import '../models/siswa_profil_model.dart';
 import '../services/siswa_profil_service.dart';
 import 'widgets/profil/sections/profil_siswa_hero_header.dart';
+import 'widgets/profil/sections/profil_siswa_error_state.dart';
 import 'widgets/profil/sheets/sheet_ganti_foto_profil_siswa.dart';
+import 'widgets/profil/dialogs/dialog_konfirmasi_hapus_foto_siswa.dart';
+import 'widgets/profil/dialogs/dialog_konfirmasi_logout_siswa.dart';
 import 'widgets/profil/tabs/tab_profil_siswa_biodata.dart';
 import 'widgets/profil/tabs/tab_profil_siswa_keamanan.dart';
 
@@ -263,36 +266,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
   }
 
   Future<void> _removePhoto() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(
-          'Hapus Foto Profil?',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus foto profil dan kembali menggunakan inisial nama?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF64748B)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE11D48),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text('Hapus', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-
+    final confirmed = await DialogKonfirmasiHapusFotoSiswa.show(context);
     if (confirmed != true) return;
 
     setState(() => _isUploadingFoto = true);
@@ -409,56 +383,7 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
   }
 
   Future<void> _confirmLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFE4E6),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.logout_rounded, color: Color(0xFFE11D48), size: 22),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Keluar dari Aplikasi?',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16),
-            ),
-          ],
-        ),
-        content: Text(
-          'Anda akan keluar dari sesi akun pelajar ini. Sesi login tersimpan akan dibersihkan.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF64748B), height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Batal',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE11D48),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-            child: Text('Ya, Keluar', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
-
+    final confirmed = await DialogKonfirmasiLogoutSiswa.show(context);
     if (confirmed != true) return;
 
     try {
@@ -544,58 +469,9 @@ class _ProfilSiswaScreenState extends State<ProfilSiswaScreen>
     }
 
     if (_errorMessage != null && _profil == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFE4E6),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.person_off_rounded,
-                  color: Color(0xFFE11D48),
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Gagal Memuat Profil',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF9F1239),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.5,
-                  color: const Color(0xFFBE123C),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _loadProfil,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Coba Lagi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      return ProfilSiswaErrorState(
+        errorMessage: _errorMessage!,
+        onRetry: _loadProfil,
       );
     }
 

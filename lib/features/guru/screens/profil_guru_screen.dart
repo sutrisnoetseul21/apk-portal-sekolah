@@ -11,7 +11,10 @@ import '../models/guru_profil_model.dart';
 import '../services/guru_profil_service.dart';
 import 'widgets/profil/sections/profil_hero_avatar_section.dart';
 import 'widgets/profil/sections/profil_tab_selector.dart';
+import 'widgets/profil/sections/profil_error_state.dart';
 import 'widgets/profil/sheets/sheet_ganti_foto_profil.dart';
+import 'widgets/profil/dialogs/dialog_konfirmasi_hapus_foto.dart';
+import 'widgets/profil/dialogs/dialog_konfirmasi_logout.dart';
 import 'widgets/profil/tabs/tab_profil_akademik.dart';
 import 'widgets/profil/tabs/tab_profil_keamanan.dart';
 import 'widgets/profil/tabs/tab_profil_kontak_biodata.dart';
@@ -339,42 +342,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
 
   /// Menampilkan dialog konfirmasi hapus foto profil
   Future<void> _confirmRemovePhoto() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(
-          'Hapus Foto Profil?',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF0F172A),
-          ),
-        ),
-        content: const Text(
-          'Apakah Anda yakin ingin menghapus foto profil dan kembali menggunakan avatar inisial nama?',
-          style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ya, Hapus'),
-          ),
-        ],
-      ),
-    );
-
+    final confirm = await DialogKonfirmasiHapusFoto.show(context);
     if (confirm != true) return;
 
     setState(() {
@@ -546,71 +514,7 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
 
   /// Menampilkan dialog konfirmasi dan melakukan logout akun
   Future<void> _handleLogout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.logout_rounded,
-                color: Color(0xFFDC2626),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Keluar dari Akun?',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Anda akan keluar dari sesi akun portal guru ini. Untuk mengakses fitur kembali, Anda perlu memasukkan email dan sandi.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Batal',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
-              'Ya, Keluar',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
+    final confirm = await DialogKonfirmasiLogout.show(context);
     if (confirm != true) return;
 
     try {
@@ -703,62 +607,9 @@ class _ProfilGuruScreenState extends State<ProfilGuruScreen> {
     }
 
     if (_errorMessage != null && _profilData == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFEE2E2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.person_off_rounded,
-                  color: Color(0xFFDC2626),
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Gagal Memuat Profil',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF991B1B),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Color(0xFF7F1D1D),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                ),
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Coba Lagi'),
-                onPressed: _fetchProfile,
-              ),
-            ],
-          ),
-        ),
+      return ProfilErrorState(
+        errorMessage: _errorMessage!,
+        onRetry: _fetchProfile,
       );
     }
 
