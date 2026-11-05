@@ -5,6 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:apk_portal_smpn1_sampang/features/guru/models/student_model.dart';
 import 'package:apk_portal_smpn1_sampang/features/guru/services/data_siswa_service.dart';
+import 'edit_biodata/tab_edit_identitas.dart';
+import 'edit_biodata/tab_edit_sekolah_keluarga.dart';
+import 'edit_biodata/tab_edit_orang_tua.dart';
 
 /// Modal Form Lengkap Edit Biodata Siswa dan Penggantian Foto
 class ModalEditBiodataSheet extends StatefulWidget {
@@ -117,7 +120,8 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
     _familyStatusController =
         TextEditingController(text: widget.student.familyStatus ?? '');
     _childOrderController = TextEditingController(
-        text: widget.student.childOrder?.toString() ?? '');
+      text: widget.student.childOrder?.toString() ?? '',
+    );
 
     // Inisialisasi Ortu
     _namaAyahController =
@@ -210,7 +214,8 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
   }
 
   Future<void> _selectDate(TextEditingController controller) async {
-    DateTime initial = DateTime.tryParse(controller.text) ?? DateTime(2010, 1, 1);
+    DateTime initial =
+        DateTime.tryParse(controller.text) ?? DateTime(2010, 1, 1);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -296,7 +301,6 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
       ),
       child: Column(
         children: [
-          // Drag handle
           const SizedBox(height: 12),
           Center(
             child: Container(
@@ -318,7 +322,7 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withOpacity(0.1),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -415,9 +419,40 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildTabIdentitas(),
-                _buildTabSekolah(),
-                _buildTabOrangTua(),
+                TabEditIdentitas(
+                  currentFotoUrl: _currentFotoUrl,
+                  isUploadingFoto: _isUploadingFoto,
+                  onPickAndUploadPhoto: _pickAndUploadPhoto,
+                  namaController: _namaController,
+                  gender: _gender,
+                  onGenderChanged: (val) => setState(() => _gender = val),
+                  religion: _religion,
+                  religionOptions: _religionOptions,
+                  onReligionChanged: (val) => setState(() => _religion = val),
+                  birthPlaceController: _birthPlaceController,
+                  birthDateController: _birthDateController,
+                  onSelectBirthDate: () => _selectDate(_birthDateController),
+                  addressController: _addressController,
+                ),
+                TabEditSekolahKeluarga(
+                  previousSchoolController: _previousSchoolController,
+                  admissionDateController: _admissionDateController,
+                  onSelectAdmissionDate: () =>
+                      _selectDate(_admissionDateController),
+                  admissionClassController: _admissionClassController,
+                  familyStatusController: _familyStatusController,
+                  childOrderController: _childOrderController,
+                ),
+                TabEditOrangTua(
+                  namaAyahController: _namaAyahController,
+                  pekerjaanAyahController: _pekerjaanAyahController,
+                  namaIbuController: _namaIbuController,
+                  pekerjaanIbuController: _pekerjaanIbuController,
+                  namaWaliController: _namaWaliController,
+                  pekerjaanWaliController: _pekerjaanWaliController,
+                  noHpOrtuController: _noHpOrtuController,
+                  noHpController: _noHpController,
+                ),
               ],
             ),
           ),
@@ -463,398 +498,6 @@ class _ModalEditBiodataSheetState extends State<ModalEditBiodataSheet>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // TAB 1: IDENTITAS & FOTO
-  Widget _buildTabIdentitas() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Foto Profil Siswa Section
-          Center(
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.blue.shade50,
-                        border: Border.all(
-                            color: const Color(0xFF2563EB), width: 2),
-                      ),
-                      child: ClipOval(
-                        child: _isUploadingFoto
-                            ? const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : (_currentFotoUrl != null &&
-                                    _currentFotoUrl!.isNotEmpty)
-                                ? Image.network(
-                                    _currentFotoUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        const Icon(Icons.person,
-                                            size: 50, color: Colors.blue),
-                                  )
-                                : const Icon(Icons.person,
-                                    size: 50, color: Colors.blue),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: InkWell(
-                        onTap: _pickAndUploadPhoto,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF2563EB),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                TextButton.icon(
-                  onPressed: _pickAndUploadPhoto,
-                  icon: const Icon(Icons.photo_library, size: 16),
-                  label: Text(
-                    'Ganti Foto Siswa',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Nama Siswa
-          _buildFieldLabel('Nama Lengkap Siswa *'),
-          _buildTextField(_namaController, 'Nama lengkap...'),
-
-          const SizedBox(height: 14),
-
-          // Jenis Kelamin
-          _buildFieldLabel('Jenis Kelamin *'),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<String>(
-                  title: const Text('Laki-laki', style: TextStyle(fontSize: 13)),
-                  value: 'L',
-                  groupValue: _gender,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setState(() => _gender = val!),
-                ),
-              ),
-              Expanded(
-                child: RadioListTile<String>(
-                  title: const Text('Perempuan', style: TextStyle(fontSize: 13)),
-                  value: 'P',
-                  groupValue: _gender,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setState(() => _gender = val!),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // Agama
-          _buildFieldLabel('Agama *'),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _religion,
-                isExpanded: true,
-                items: _religionOptions.map((e) {
-                  return DropdownMenuItem(value: e, child: Text(e));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _religion = val);
-                },
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          // Tempat & Tanggal Lahir
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFieldLabel('Tempat Lahir'),
-                    _buildTextField(_birthPlaceController, 'Kota kelahiran...'),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFieldLabel('Tanggal Lahir'),
-                    TextField(
-                      controller: _birthDateController,
-                      readOnly: true,
-                      onTap: () => _selectDate(_birthDateController),
-                      decoration: InputDecoration(
-                        hintText: 'YYYY-MM-DD',
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        suffixIcon: const Icon(Icons.calendar_today, size: 18),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // Alamat
-          _buildFieldLabel('Alamat Tempat Tinggal'),
-          TextField(
-            controller: _addressController,
-            maxLines: 2,
-            decoration: InputDecoration(
-              hintText: 'Dusun, Desa, RT/RW, Kecamatan...',
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // TAB 2: SEKOLAH & KELUARGA
-  Widget _buildTabSekolah() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFieldLabel('Sekolah Asal (SD / MI)'),
-          _buildTextField(_previousSchoolController, 'Contoh: SDN 1 / Asal SD'),
-
-          const SizedBox(height: 14),
-
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFieldLabel('Tanggal Masuk'),
-                    TextField(
-                      controller: _admissionDateController,
-                      readOnly: true,
-                      onTap: () => _selectDate(_admissionDateController),
-                      decoration: InputDecoration(
-                        hintText: 'YYYY-MM-DD',
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        suffixIcon: const Icon(Icons.calendar_month, size: 18),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFieldLabel('Diterima di Kelas'),
-                    _buildTextField(_admissionClassController, 'Contoh: 7A'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFieldLabel('Status dalam Keluarga'),
-                    _buildTextField(
-                        _familyStatusController, 'Anak Kandung/Tiri...'),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildFieldLabel('Anak Ke-'),
-                    _buildTextField(_childOrderController, '1',
-                        keyboardType: TextInputType.number),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // TAB 3: ORANG TUA / WALI & KONTAK
-  Widget _buildTabOrangTua() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFieldLabel('Nama Ayah Kandung'),
-          _buildTextField(_namaAyahController, 'Nama Ayah...'),
-
-          const SizedBox(height: 10),
-
-          _buildFieldLabel('Pekerjaan Ayah'),
-          _buildTextField(_pekerjaanAyahController, 'Pekerjaan Ayah...'),
-
-          const SizedBox(height: 16),
-
-          _buildFieldLabel('Nama Ibu Kandung'),
-          _buildTextField(_namaIbuController, 'Nama Ibu...'),
-
-          const SizedBox(height: 10),
-
-          _buildFieldLabel('Pekerjaan Ibu'),
-          _buildTextField(_pekerjaanIbuController, 'Pekerjaan Ibu...'),
-
-          const SizedBox(height: 16),
-
-          _buildFieldLabel('Nama Wali (Jika Ada)'),
-          _buildTextField(_namaWaliController, 'Nama Wali...'),
-
-          const SizedBox(height: 10),
-
-          _buildFieldLabel('Pekerjaan Wali'),
-          _buildTextField(_pekerjaanWaliController, 'Pekerjaan Wali...'),
-
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 12),
-
-          _buildFieldLabel('Nomor HP / WhatsApp Orang Tua'),
-          _buildTextField(_noHpOrtuController, '08xxxxxxxxxx',
-              keyboardType: TextInputType.phone),
-
-          const SizedBox(height: 12),
-
-          _buildFieldLabel('Nomor HP / WhatsApp Siswa'),
-          _buildTextField(_noHpController, '08xxxxxxxxxx',
-              keyboardType: TextInputType.phone),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        label,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF334155),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.plusJakartaSans(
-          color: const Color(0xFF94A3B8),
-          fontSize: 13,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
-        ),
       ),
     );
   }

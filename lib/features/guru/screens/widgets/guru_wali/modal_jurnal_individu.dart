@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:apk_portal_smpn1_sampang/features/guru/models/guru_wali_dashboard_model.dart';
 import 'package:apk_portal_smpn1_sampang/features/guru/services/guru_wali_service.dart';
+import 'modals/jurnal_individu/jurnal_individu_summary_header.dart';
+import 'modals/jurnal_individu/jurnal_individu_parameter_form.dart';
+import 'modals/jurnal_individu/jurnal_individu_badge_card.dart';
+import 'modals/jurnal_individu/jurnal_individu_rujukan_bk_card.dart';
 
 /// Modal Bottomsheet untuk mencatat Jurnal Bimbingan Individu (Perorangan)
 /// Sesuai Permendikdasmen No. 11/2025 dan Kepmendikdasmen No. 221/P/2025
@@ -27,7 +31,7 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
 
   String _kategori = 'Karakter & Kedisiplinan';
   String _statusSesi = 'Tuntas / Selesai';
-  String _rujukanKolaborasi = 'Mandiri';
+  final String _rujukanKolaborasi = 'Mandiri';
   String _sentimen = 'Positif';
 
   final TextEditingController _uraianController = TextEditingController();
@@ -207,502 +211,75 @@ class _ModalJurnalIndividuState extends State<ModalJurnalIndividu> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Ringkasan Siswa
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                      backgroundImage: widget.siswa.avatarUrl != null
-                          ? NetworkImage(widget.siswa.avatarUrl!)
-                          : null,
-                      child: widget.siswa.avatarUrl == null
-                          ? Text(
-                              widget.siswa.name.isNotEmpty
-                                  ? widget.siswa.name[0].toUpperCase()
-                                  : 'S',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2563EB),
-                              ),
-                            )
-                          : null,
+              JurnalIndividuSummaryHeader(
+                siswa: widget.siswa,
+                selectedDate: _selectedDate,
+                selectedTime: _selectedTime,
+                onPickDate: _pickDate,
+                onPickTime: _pickTime,
+              ),
+              const SizedBox(height: 18),
+              JurnalIndividuParameterForm(
+                kategori: _kategori,
+                kategoriList: _kategoriList,
+                onKategoriChanged: (val) {
+                  if (val != null) setState(() => _kategori = val);
+                },
+                statusSesi: _statusSesi,
+                onStatusSesiChanged: (val) {
+                  if (val != null) setState(() => _statusSesi = val);
+                },
+                sentimen: _sentimen,
+                onSentimenChanged: (val) {
+                  if (val != null) setState(() => _sentimen = val);
+                },
+                uraianController: _uraianController,
+                rtlController: _rtlController,
+              ),
+              const SizedBox(height: 20),
+              JurnalIndividuBadgeCard(
+                giveBadge: _giveBadge,
+                onToggleBadge: (val) => setState(() => _giveBadge = val),
+                selectedBadge: _selectedBadge,
+                badgeOptions: _badgeOptions,
+                onSelectBadge: (b) => setState(() => _selectedBadge = b),
+                catatanApresiasiController: _catatanApresiasiController,
+              ),
+              const SizedBox(height: 16),
+              JurnalIndividuRujukanBkCard(
+                rujukBk: _rujukBk,
+                onToggleRujukBk: (val) => setState(() => _rujukBk = val),
+                urgensiBk: _urgensiBk,
+                onSelectUrgensi: (u) => setState(() => _urgensiBk = u),
+                alasanBkController: _alasanBkController,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.siswa.name,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            'NISN: ${widget.siswa.nisn} • ${widget.siswa.kelasName}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
+                  onPressed: _isSubmitting ? null : _submit,
+                  child: _isSubmitting
+                      ? const SpinKitThreeBounce(color: Colors.white, size: 20)
+                      : const Text(
+                          'Simpan Jurnal Bimbingan',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),
-                    // Tanggal & Waktu Bimbingan
-                    const Text(
-                      'Tanggal & Waktu Sesi',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: _pickDate,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: const Color(0xFFCBD5E1)),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 16,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: InkWell(
-                            onTap: _pickTime,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: const Color(0xFFCBD5E1)),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.access_time_rounded,
-                                    size: 16,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _selectedTime.format(context),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // Kategori Pendampingan (4 Pilar)
-                    const Text(
-                      'Pilar Bimbingan (Permendikdasmen 11/2025)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _kategori,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                      ),
-                      items: _kategoriList.map((kat) {
-                        return DropdownMenuItem<String>(
-                          value: kat,
-                          child: Text(kat, style: const TextStyle(fontSize: 13)),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _kategori = val);
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // Status Sesi & Rujukan Kolaborasi
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Status Sesi',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              DropdownButtonFormField<String>(
-                                value: _statusSesi,
-                                isExpanded: true,
-                                decoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                  ),
-                                ),
-                                items: const [
-                                  DropdownMenuItem(value: 'Tuntas / Selesai', child: Text('Tuntas', style: TextStyle(fontSize: 12))),
-                                  DropdownMenuItem(value: 'Dalam Pemantauan', child: Text('Pemantauan', style: TextStyle(fontSize: 12))),
-                                  DropdownMenuItem(value: 'Bimbingan Lanjutan', child: Text('Lanjutan', style: TextStyle(fontSize: 12))),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setState(() => _statusSesi = val);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Sentimen Emosional',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              DropdownButtonFormField<String>(
-                                value: _sentimen,
-                                isExpanded: true,
-                                decoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                  ),
-                                ),
-                                items: const [
-                                  DropdownMenuItem(value: 'Positif', child: Text('🟢 Positif', style: TextStyle(fontSize: 12))),
-                                  DropdownMenuItem(value: 'Netral', child: Text('⚪ Netral', style: TextStyle(fontSize: 12))),
-                                  DropdownMenuItem(value: 'Negatif', child: Text('🔴 Cemas/Negatif', style: TextStyle(fontSize: 12))),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setState(() => _sentimen = val);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // Uraian Masalah / Pembahasan
-                    const Text(
-                      'Uraian Pembahasan & Masalah *',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _uraianController,
-                      maxLines: 4,
-                      scrollPadding: const EdgeInsets.only(bottom: 120),
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Tuliskan topik, dinamika perkembangan, atau hal yang dibahas...',
-                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().length < 5) {
-                          return 'Uraian bimbingan minimal 5 karakter.';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // Rencana Tindak Lanjut
-                    const Text(
-                      'Rencana Tindak Lanjut (RTL)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _rtlController,
-                      maxLines: 2,
-                      scrollPadding: const EdgeInsets.only(bottom: 120),
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Langkah nyata yang disepakati untuk bimbingan berikutnya...',
-                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Digital Badge Karakter (Card Interaktif)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7).withValues(alpha: 0.35),
-                        border: Border.all(color: const Color(0xFFFDE68A)),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.stars_rounded, color: Color(0xFFD97706), size: 22),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'Apresiasi Digital Badge Karakter',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF92400E),
-                                  ),
-                                ),
-                              ),
-                              Switch(
-                                value: _giveBadge,
-                                activeColor: const Color(0xFFD97706),
-                                onChanged: (val) => setState(() => _giveBadge = val),
-                              ),
-                            ],
-                          ),
-                          if (_giveBadge) ...[
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Pilih Karakter Terpuji:',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF78350F)),
-                            ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: _badgeOptions.map((b) {
-                                final isSelected = _selectedBadge == b;
-                                return ChoiceChip(
-                                  label: Text(b, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : const Color(0xFF78350F))),
-                                  selected: isSelected,
-                                  selectedColor: const Color(0xFFD97706),
-                                  backgroundColor: Colors.white,
-                                  onSelected: (_) => setState(() => _selectedBadge = b),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _catatanApresiasiController,
-                              scrollPadding: const EdgeInsets.only(bottom: 120),
-                              style: const TextStyle(fontSize: 12),
-                              decoration: InputDecoration(
-                                hintText: 'Pesan apresiasi penyemangat siswa...',
-                                hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: Color(0xFFFDE68A)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Opsi Eskalasi Rujukan BK
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: _rujukBk
-                            ? const Color(0xFFFEE2E2).withValues(alpha: 0.5)
-                            : const Color(0xFFF8FAFC),
-                        border: Border.all(
-                          color: _rujukBk ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.health_and_safety_rounded,
-                                color: _rujukBk ? const Color(0xFFDC2626) : const Color(0xFF64748B),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Eskalasi ke Guru BK (Kasus Khusus)',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: _rujukBk ? const Color(0xFF991B1B) : const Color(0xFF334155),
-                                  ),
-                                ),
-                              ),
-                              Switch(
-                                value: _rujukBk,
-                                activeColor: const Color(0xFFDC2626),
-                                onChanged: (val) => setState(() => _rujukBk = val),
-                              ),
-                            ],
-                          ),
-                          if (_rujukBk) ...[
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Tingkat Urgensi:',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF991B1B)),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                ChoiceChip(
-                                  label: const Text('Rendah', style: TextStyle(fontSize: 11)),
-                                  selected: _urgensiBk == 'rendah',
-                                  onSelected: (_) => setState(() => _urgensiBk = 'rendah'),
-                                ),
-                                const SizedBox(width: 6),
-                                ChoiceChip(
-                                  label: const Text('Sedang', style: TextStyle(fontSize: 11)),
-                                  selected: _urgensiBk == 'sedang',
-                                  onSelected: (_) => setState(() => _urgensiBk = 'sedang'),
-                                ),
-                                const SizedBox(width: 6),
-                                ChoiceChip(
-                                  label: const Text('Darurat', style: TextStyle(fontSize: 11, color: Colors.white)),
-                                  selected: _urgensiBk == 'darurat',
-                                  selectedColor: const Color(0xFFDC2626),
-                                  onSelected: (_) => setState(() => _urgensiBk = 'darurat'),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _alasanBkController,
-                              scrollPadding: const EdgeInsets.only(bottom: 120),
-                              style: const TextStyle(fontSize: 12),
-                              decoration: InputDecoration(
-                                hintText: 'Alasan dan latar belakang rujukan ke BK...',
-                                hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Tombol Submit
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: _isSubmitting ? null : _submit,
-                        child: _isSubmitting
-                            ? const SpinKitThreeBounce(color: Colors.white, size: 20)
-                            : const Text(
-                                'Simpan Jurnal Bimbingan',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

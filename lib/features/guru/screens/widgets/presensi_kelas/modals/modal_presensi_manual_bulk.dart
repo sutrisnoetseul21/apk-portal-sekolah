@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:apk_portal_smpn1_sampang/core/config/app_config.dart';
 import 'package:apk_portal_smpn1_sampang/core/constants/app_colors.dart';
+import 'bulk/manual_bulk_bottom_bar.dart';
+import 'bulk/manual_bulk_date_picker_card.dart';
+import 'bulk/manual_bulk_quick_setter_bar.dart';
+import 'bulk/manual_bulk_student_card.dart';
 
 /// Modal Input Presensi Manual Massal Semua Siswa
 class ModalPresensiManualBulk extends StatefulWidget {
@@ -191,8 +194,7 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              res.data['message']?.toString() ??
-                  'Presensi berhasil disimpan!',
+              res.data['message']?.toString() ?? 'Presensi berhasil disimpan!',
             ),
             backgroundColor: const Color(0xFF059669),
           ),
@@ -204,9 +206,7 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Presensi tanggal $_inputDate disimpan!',
-            ),
+            content: Text('Presensi tanggal $_inputDate disimpan!'),
             backgroundColor: const Color(0xFF059669),
           ),
         );
@@ -235,28 +235,19 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
           children: [
             // Header Modal Input Manual
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, AppColors.primaryDark],
                 ),
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(26),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Row(
                     children: [
-                      Icon(
-                        Icons.edit_note_rounded,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                      Icon(Icons.edit_note_rounded, color: Colors.white, size: 24),
                       SizedBox(width: 10),
                       Text(
                         'Input Presensi Manual',
@@ -269,10 +260,7 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Colors.white,
-                    ),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -284,244 +272,52 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: Column(
                 children: [
-                  // Date Picker Row
-                  InkWell(
-                    onTap: () async {
+                  ManualBulkDatePickerCard(
+                    inputDate: _inputDate,
+                    isHoliday: _isHoliday,
+                    onPickDate: () async {
                       final picked = await showDatePicker(
                         context: context,
-                        initialDate: DateTime.tryParse(_inputDate) ??
-                            DateTime.now(),
+                        initialDate: DateTime.tryParse(_inputDate) ?? DateTime.now(),
                         firstDate: DateTime(2024),
                         lastDate: DateTime(2030),
                       );
                       if (picked != null) {
-                        final formatted =
-                            picked.toIso8601String().substring(0, 10);
+                        final formatted = picked.toIso8601String().substring(0, 10);
                         setState(() => _inputDate = formatted);
                         _fetchDateList(formatted);
                       }
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today_rounded,
-                                size: 16,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Pilih Tanggal: ',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                _inputDate,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Text(
-                            'Ganti Tanggal',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-
-                  if (_isHoliday) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFFFECACA),
-                        ),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            color: Color(0xFFDC2626),
-                            size: 18,
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Input ditolak: Tanggal ini adalah hari libur sekolah.',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFDC2626),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
                   const SizedBox(height: 10),
-
-                  // Baris Set Massal Datang & Pulang
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _bulkDatang.isEmpty ? null : _bulkDatang,
-                              hint: const Text(
-                                '⚡ Set Massal Datang',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              isExpanded: true,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'hadir',
-                                  child: Text('⚡ Hadir Semua'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'telat',
-                                  child: Text('Terlambat Semua'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'izin',
-                                  child: Text('Izin Semua'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'sakit',
-                                  child: Text('Sakit Semua'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'alpa',
-                                  child: Text('Alpa Semua'),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                if (val == null) return;
-                                setState(() {
-                                  _bulkDatang = val;
-                                  for (var s in _inputList) {
-                                    if (s['is_locked'] == true) continue;
-                                    s['status'] = val;
-                                    if ([
-                                      'izin',
-                                      'sakit',
-                                      'alpa',
-                                    ].contains(val)) {
-                                      s['status_pulang'] = val;
-                                    }
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (_enableCheckout) ...[
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _bulkPulang.isEmpty ? null : _bulkPulang,
-                                hint: const Text(
-                                  '⚡ Set Massal Pulang',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                isExpanded: true,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'pulang',
-                                    child: Text('⚡ Pulang Semua'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'izin',
-                                    child: Text('Izin Semua'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'sakit',
-                                    child: Text('Sakit Semua'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'alpa',
-                                    child: Text('Alpa Semua'),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  if (val == null) return;
-                                  setState(() {
-                                    _bulkPulang = val;
-                                    for (var s in _inputList) {
-                                      final cur =
-                                          s['status']?.toString() ?? '';
-                                      if ([
-                                        'izin',
-                                        'sakit',
-                                        'alpa',
-                                      ].contains(cur)) {
-                                        continue;
-                                      }
-                                      s['status_pulang'] = val;
-                                    }
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                  ManualBulkQuickSetterBar(
+                    bulkDatang: _bulkDatang,
+                    bulkPulang: _bulkPulang,
+                    enableCheckout: _enableCheckout,
+                    onBulkDatangChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        _bulkDatang = val;
+                        for (var s in _inputList) {
+                          if (s['is_locked'] == true) continue;
+                          s['status'] = val;
+                          if (['izin', 'sakit', 'alpa'].contains(val)) {
+                            s['status_pulang'] = val;
+                          }
+                        }
+                      });
+                    },
+                    onBulkPulangChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        _bulkPulang = val;
+                        for (var s in _inputList) {
+                          final cur = s['status']?.toString() ?? '';
+                          if (['izin', 'sakit', 'alpa'].contains(cur)) continue;
+                          s['status_pulang'] = val;
+                        }
+                      });
+                    },
                   ),
                 ],
               ),
@@ -536,21 +332,9 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: _inputList.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, idx) {
                         final item = _inputList[idx];
-                        final isLocked = item['is_locked'] == true;
-                        final curStatus =
-                            item['status']?.toString() ?? '';
-                        final curPulang =
-                            item['status_pulang']?.toString() ?? '';
-                        final isNonAtt = [
-                          'izin',
-                          'sakit',
-                          'alpa',
-                        ].contains(curStatus);
-
                         final sId = item['id']?.toString() ?? '';
                         if (!_lateControllers.containsKey(sId)) {
                           _lateControllers[sId] = TextEditingController(
@@ -559,333 +343,38 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
                         }
                         final ctrl = _lateControllers[sId]!;
 
-                        return Container(
-                          key: ValueKey('manual_card_$sId'),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['name']?.toString() ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  // Kolom Status Datang
-                                  Expanded(
-                                    child: isLocked
-                                        ? Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 9,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFFFFBEB),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: const Color(0xFFFDE68A),
-                                              ),
-                                            ),
-                                            child: const Text(
-                                              '🔒 Sudah Scan Kiosk',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF92400E),
-                                              ),
-                                            ),
-                                          )
-                                        : Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: AppColors.border,
-                                              ),
-                                            ),
-                                            child: DropdownButtonHideUnderline(
-                                              child: DropdownButton<String>(
-                                                value: curStatus.isEmpty
-                                                    ? null
-                                                    : curStatus,
-                                                hint: const Text(
-                                                  'Datang: -- Pilih --',
-                                                  style: TextStyle(
-                                                    fontSize: 11.5,
-                                                  ),
-                                                ),
-                                                isExpanded: true,
-                                                items: const [
-                                                  DropdownMenuItem(
-                                                    value: 'hadir',
-                                                    child: Text('Hadir'),
-                                                  ),
-                                                  DropdownMenuItem(
-                                                    value: 'telat',
-                                                    child: Text('Terlambat'),
-                                                  ),
-                                                  DropdownMenuItem(
-                                                    value: 'izin',
-                                                    child: Text('Izin'),
-                                                  ),
-                                                  DropdownMenuItem(
-                                                    value: 'sakit',
-                                                    child: Text('Sakit'),
-                                                  ),
-                                                  DropdownMenuItem(
-                                                    value: 'alpa',
-                                                    child: Text('Alpa'),
-                                                  ),
-                                                ],
-                                                onChanged: (v) {
-                                                  setState(() {
-                                                    item['status'] = v ?? '';
-                                                    if ([
-                                                      'izin',
-                                                      'sakit',
-                                                      'alpa',
-                                                    ].contains(v)) {
-                                                      item['status_pulang'] = v;
-                                                    }
-                                                  });
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                  ),
-                                  if (_enableCheckout) ...[
-                                    const SizedBox(width: 8),
-                                    // Kolom Status Pulang
-                                    Expanded(
-                                      child: isNonAtt
-                                          ? Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 11,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFF1F5F9),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: Text(
-                                                curStatus.toUpperCase(),
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      AppColors.textSecondary,
-                                                ),
-                                              ),
-                                            )
-                                          : Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                border: Border.all(
-                                                  color: AppColors.border,
-                                                ),
-                                              ),
-                                              child: DropdownButtonHideUnderline(
-                                                child: DropdownButton<String>(
-                                                  value: [
-                                                    'pulang',
-                                                    'izin',
-                                                    'sakit',
-                                                    'alpa',
-                                                  ].contains(curPulang)
-                                                      ? curPulang
-                                                      : null,
-                                                  hint: const Text(
-                                                    'Pulang: -- Pilih --',
-                                                    style: TextStyle(
-                                                      fontSize: 11.5,
-                                                    ),
-                                                  ),
-                                                  isExpanded: true,
-                                                  items: const [
-                                                    DropdownMenuItem(
-                                                      value: 'pulang',
-                                                      child: Text('Pulang'),
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      value: 'izin',
-                                                      child: Text('Izin'),
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      value: 'sakit',
-                                                      child: Text('Sakit'),
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      value: 'alpa',
-                                                      child: Text('Alpa'),
-                                                    ),
-                                                  ],
-                                                  onChanged: (v) {
-                                                    setState(() {
-                                                      item['status_pulang'] =
-                                                          v ?? '';
-                                                    });
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-
-                              // Input Menit Terlambat jika status == 'telat'
-                              if (curStatus == 'telat' && !isLocked) ...[
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Keterlambatan (Menit): ',
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFB45309),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: 90,
-                                      child: TextField(
-                                        key: ValueKey('late_ctrl_$sId'),
-                                        controller: ctrl,
-                                        keyboardType: TextInputType.number,
-                                        textInputAction: TextInputAction.done,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly,
-                                        ],
-                                        scrollPadding: const EdgeInsets.only(
-                                          bottom: 90,
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        decoration: InputDecoration(
-                                          suffixText: 'mnt',
-                                          isDense: true,
-                                          filled: true,
-                                          fillColor: const Color(0xFFFFFBEB),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 8,
-                                          ),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                        onChanged: (v) {
-                                          item['late_minutes'] =
-                                              int.tryParse(v.trim()) ?? 0;
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                          ),
+                        return ManualBulkStudentCard(
+                          item: item,
+                          enableCheckout: _enableCheckout,
+                          lateController: ctrl,
+                          onStatusDatangChanged: (v) {
+                            setState(() {
+                              item['status'] = v ?? '';
+                              if (['izin', 'sakit', 'alpa'].contains(v)) {
+                                item['status_pulang'] = v;
+                              }
+                            });
+                          },
+                          onStatusPulangChanged: (v) {
+                            setState(() {
+                              item['status_pulang'] = v ?? '';
+                            });
+                          },
+                          onLateMinutesChanged: (v) {
+                            item['late_minutes'] = int.tryParse(v.trim()) ?? 0;
+                          },
                         );
                       },
                     ),
             ),
 
             // Tombol Simpan Presensi Massal
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Batal'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isHoliday
-                            ? Colors.grey
-                            : const Color(0xFF059669),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: (_isHoliday ||
-                              _isSaving ||
-                              _isLoadingModal)
-                          ? null
-                          : _handleSave,
-                      child: _isSaving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Simpan Presensi',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
+            ManualBulkBottomBar(
+              isHoliday: _isHoliday,
+              isSaving: _isSaving,
+              isLoadingModal: _isLoadingModal,
+              onCancel: () => Navigator.pop(context),
+              onSave: _handleSave,
             ),
           ],
         ),
@@ -893,4 +382,3 @@ class _ModalPresensiManualBulkState extends State<ModalPresensiManualBulk> {
     );
   }
 }
-
