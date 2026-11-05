@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_presensi_kbm_model.dart';
-import 'package:apk_portal_smpn1_sampang/features/siswa/screens/widgets/presensi_siswa/sections/kbm_siswa_summary_card.dart';
 import 'package:apk_portal_smpn1_sampang/features/siswa/screens/widgets/presensi_siswa/sections/kbm_siswa_subject_list.dart';
 import 'package:apk_portal_smpn1_sampang/features/siswa/screens/widgets/presensi_siswa/modals/sheet_kbm_siswa_subject_detail.dart';
 
 void main() {
-  testWidgets('KbmSiswaSummaryCard and KbmSiswaSubjectList render correctly', (
+  testWidgets(
+      'KbmSiswaSubjectList renders 2x2 attendance boxes without percentage badge',
+      (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(400, 1600));
-
-    const summary = SiswaKbmSummary(
-      totalPertemuanTerdata: 10,
-      totalHadir: 9,
-      totalIzin: 1,
-      totalSakit: 0,
-      totalAlpa: 0,
-      persentaseKehadiran: 90.0,
-    );
 
     final subjects = <SiswaKbmSubject>[
       const SiswaKbmSubject(
@@ -33,9 +25,13 @@ void main() {
           nip: '198501012010011001',
         ),
         stats: SiswaKbmSubjectStats(
-          totalPertemuanTerdata: 2,
+          totalPertemuanTerdata: 5,
           hadir: 2,
-          persentaseKehadiran: 100.0,
+          izin: 1,
+          sakit: 0,
+          alpa: 1,
+          tidakMengikuti: 1,
+          persentaseKehadiran: 40.0,
         ),
         hasData: true,
         pertemuanList: [
@@ -63,22 +59,23 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: Column(
-              children: [
-                const KbmSiswaSummaryCard(summary: summary),
-                KbmSiswaSubjectList(subjects: subjects),
-              ],
-            ),
+            child: KbmSiswaSubjectList(subjects: subjects),
           ),
         ),
       ),
     );
 
-    expect(find.text('Presensi KBM Mapel'), findsOneWidget);
-    expect(find.text('90.0%'), findsOneWidget);
     expect(find.text('Informatika'), findsOneWidget);
     expect(find.text('Budi Santoso, S.Kom'), findsOneWidget);
-    expect(find.text('100%'), findsOneWidget);
+    expect(find.text('HADIR'), findsOneWidget);
+    expect(find.text('2 kali'), findsOneWidget);
+    expect(find.text('IZIN / SAKIT'), findsOneWidget);
+    expect(find.text('ALPA'), findsOneWidget);
+    expect(find.text('TIDAK MENGIKUTI'), findsOneWidget);
+    expect(find.text('5 Pertemuan'), findsOneWidget);
+    expect(find.text('Lihat Riwayat KBM'), findsOneWidget);
+    // Pastikan persentase 40% tidak ditampilkan
+    expect(find.textContaining('40%'), findsNothing);
   });
 
   testWidgets('SheetKbmSiswaSubjectDetail renders subject meetings properly', (
@@ -134,5 +131,6 @@ void main() {
     expect(find.text('Informatika'), findsOneWidget);
     expect(find.textContaining('Pengenalan Microsoft Excel'), findsOneWidget);
     expect(find.text('Pertemuan 1'), findsOneWidget);
+    expect(find.text('Kehadiran KBM'), findsNothing);
   });
 }

@@ -11,7 +11,6 @@ import 'widgets/presensi_siswa/sections/presensi_siswa_calendar_card.dart';
 import 'widgets/presensi_siswa/sections/presensi_siswa_recent_activity.dart';
 import 'widgets/presensi_siswa/sections/sholat_siswa_stats_card.dart';
 import 'widgets/presensi_siswa/sections/sholat_siswa_calendar_card.dart';
-import 'widgets/presensi_siswa/sections/kbm_siswa_summary_card.dart';
 import 'widgets/presensi_siswa/sections/kbm_siswa_subject_list.dart';
 import 'widgets/presensi_siswa/modals/sheet_presensi_siswa_day_detail.dart';
 import 'widgets/presensi_siswa/modals/sheet_sholat_siswa_day_detail.dart';
@@ -425,8 +424,7 @@ class _PresensiSiswaScreenState extends State<PresensiSiswaScreen>
               PresensiSiswaMonthSelector(
                 availableMonths: _sholatData!.availableMonths,
                 selectedMonthYearKey: _selectedSholatMonthYearKey,
-                onMonthChanged: (val) =>
-                    _loadSholatData(monthYearKey: val),
+                onMonthChanged: (val) => _loadSholatData(monthYearKey: val),
               ),
 
             const SizedBox(height: 16),
@@ -449,7 +447,9 @@ class _PresensiSiswaScreenState extends State<PresensiSiswaScreen>
 
             // 4. Riwayat Sholat Terbaru
             if (_sholatData != null && _sholatData!.recentActivity.isNotEmpty)
-              _buildSholatRecentActivitySection(),
+              SholatSiswaRecentActivity(
+                activities: _sholatData!.recentActivity,
+              ),
 
             const SizedBox(height: 24),
           ],
@@ -458,147 +458,9 @@ class _PresensiSiswaScreenState extends State<PresensiSiswaScreen>
     );
   }
 
-  /// Section Riwayat Aktivitas Sholat Dhuhur
-  Widget _buildSholatRecentActivitySection() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.history_rounded, size: 18, color: Color(0xFF0D9488)),
-              SizedBox(width: 8),
-              Text(
-                'Catatan Ibadah Terbaru',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _sholatData!.recentActivity.length,
-            separatorBuilder: (_, _) =>
-                const Divider(height: 20, color: Color(0xFFF1F5F9)),
-            itemBuilder: (ctx, idx) {
-              final item = _sholatData!.recentActivity[idx];
-              Color dotColor = const Color(0xFF0D9488);
-              Color badgeBg = const Color(0xFFCCFBF1);
-              Color badgeFg = const Color(0xFF0F766E);
-
-              switch (item.status) {
-                case 'berjamaah':
-                  dotColor = const Color(0xFF0D9488);
-                  badgeBg = const Color(0xFFCCFBF1);
-                  badgeFg = const Color(0xFF0F766E);
-                  break;
-                case 'masbuk':
-                  dotColor = const Color(0xFFD97706);
-                  badgeBg = const Color(0xFFFEF3C7);
-                  badgeFg = const Color(0xFFB45309);
-                  break;
-                case 'halangan':
-                case 'haid':
-                  dotColor = const Color(0xFF7C3AED);
-                  badgeBg = const Color(0xFFF3E8FF);
-                  badgeFg = const Color(0xFF6D28D9);
-                  break;
-                case 'ijin':
-                case 'izin':
-                case 'sakit':
-                  dotColor = const Color(0xFF2563EB);
-                  badgeBg = const Color(0xFFEFF6FF);
-                  badgeFg = const Color(0xFF1D4ED8);
-                  break;
-                case 'tidak_hadir':
-                  dotColor = const Color(0xFFDC2626);
-                  badgeBg = const Color(0xFFFEE2E2);
-                  badgeFg = const Color(0xFFB91C1C);
-                  break;
-                default:
-                  dotColor = const Color(0xFF64748B);
-                  badgeBg = const Color(0xFFF1F5F9);
-                  badgeFg = const Color(0xFF64748B);
-              }
-
-              return Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: dotColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.formattedDate,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (item.note != null && item.note!.isNotEmpty)
-                          Text(
-                            item.note!,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: badgeBg,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      item.statusLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: badgeFg,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Tampilan Tab 3: Presensi KBM (per Mata Pelajaran)
+  /// Langsung menampilkan Pilihan Bulan di bagian atas (di bawah header biru)
+  /// diikuti dengan kotak-kotak mata pelajaran tanpa kartu biru ringkasan
   Widget _buildPresensiKbmTab() {
     if (_isKbmLoading && _kbmData == null) {
       return const Center(
@@ -624,7 +486,7 @@ class _PresensiSiswaScreenState extends State<PresensiSiswaScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. Selector Periode / Bulan KBM
+            // 1. Selector Periode / Bulan KBM (di bawah header biru)
             if (_kbmData != null && availableMonths.isNotEmpty)
               PresensiSiswaMonthSelector(
                 availableMonths: availableMonths
@@ -635,57 +497,16 @@ class _PresensiSiswaScreenState extends State<PresensiSiswaScreen>
                           label: m.label,
                         ))
                     .toList(),
-                selectedMonthYearKey:
-                    _selectedKbmMonthYearKey ?? _kbmData!.selectedPeriod.monthYear,
+                selectedMonthYearKey: _selectedKbmMonthYearKey ??
+                    _kbmData!.selectedPeriod.monthYear,
                 onMonthChanged: (val) => _loadKbmData(monthYearKey: val),
               ),
 
             const SizedBox(height: 16),
 
-            // 2. Kartu Ringkasan KBM Terdata (Indigo Gradient Card)
+            // 2. Daftar Kotak-Kotak Mata Pelajaran (Hadir, Izin/Sakit, Alpa, Tidak Mengikuti)
             if (_kbmData != null)
-              KbmSiswaSummaryCard(summary: _kbmData!.summary),
-
-            const SizedBox(height: 20),
-
-            // 3. Daftar 11-12 Mata Pelajaran
-            if (_kbmData != null) ...[
-              if (_kbmData!.subjects.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: const Column(
-                    children: [
-                      Icon(Icons.menu_book_rounded,
-                          size: 44, color: Color(0xFF94A3B8)),
-                      SizedBox(height: 10),
-                      Text(
-                        'Belum Ada Jadwal Mata Pelajaran',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Rombongan belajar Anda belum memiliki daftar mata pelajaran aktif.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              else
-                KbmSiswaSubjectList(subjects: _kbmData!.subjects),
-            ],
+              KbmSiswaSubjectList(subjects: _kbmData!.subjects),
 
             const SizedBox(height: 24),
           ],

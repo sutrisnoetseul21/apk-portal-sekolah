@@ -10,7 +10,10 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
     required this.subject,
   });
 
-  static Future<void> show(BuildContext context, {required SiswaKbmSubject subject}) {
+  static Future<void> show(
+    BuildContext context, {
+    required SiswaKbmSubject subject,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -28,7 +31,9 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
       case 'izin':
         return const Color(0xFFDBEAFE); // Blue 100
       case 'alpa':
-        return const Color(0xFFFEE2E2); // Red 100
+        return const Color(0xFFFEF3C7); // Amber 100
+      case 'tidak_mengikuti':
+        return const Color(0xFFFFE4E6); // Rose 100
       default:
         return const Color(0xFFEDE9FE); // Purple 100
     }
@@ -43,7 +48,9 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
       case 'izin':
         return const Color(0xFF2563EB); // Blue 600
       case 'alpa':
-        return const Color(0xFFDC2626); // Red 600
+        return const Color(0xFFB45309); // Amber 700
+      case 'tidak_mengikuti':
+        return const Color(0xFFE11D48); // Rose 600
       default:
         return const Color(0xFF7C3AED); // Purple 600
     }
@@ -59,6 +66,8 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
         return Icons.assignment_turned_in_rounded;
       case 'alpa':
         return Icons.cancel_rounded;
+      case 'tidak_mengikuti':
+        return Icons.person_off_rounded;
       default:
         return Icons.remove_circle_outline_rounded;
     }
@@ -66,7 +75,6 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stats = subject.stats;
     final meetings = subject.pertemuanList;
 
     return DraggableScrollableSheet(
@@ -96,7 +104,10 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
 
               // Header Mapel
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -106,7 +117,7 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Icon(
-                        Icons.school_rounded,
+                        Icons.menu_book_rounded,
                         color: Color(0xFF4F46E5),
                         size: 26,
                       ),
@@ -126,9 +137,9 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            subject.guruPengampu.name,
+                            'Guru Pengampu: ${subject.guruPengampu.name}',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               color: Colors.grey.shade600,
                               fontWeight: FontWeight.w500,
                             ),
@@ -146,81 +157,18 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
 
               const Divider(height: 1),
 
-              // Content
+              // Daftar Riwayat Pertemuan Terdata
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.all(20),
                   children: [
-                    // Kartu Statistik Mini Mapel
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'Kehadiran KBM',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF334155),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: stats.persentaseKehadiran >= 85
-                                      ? const Color(0xFFDCFCE7)
-                                      : const Color(0xFFFEF3C7),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${stats.persentaseKehadiran.toStringAsFixed(1)}% Hadir',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: stats.persentaseKehadiran >= 85
-                                        ? const Color(0xFF16A34A)
-                                        : const Color(0xFFD97706),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildMiniStat('Terdata', stats.totalPertemuanTerdata.toString(), const Color(0xFF1E293B)),
-                              _buildMiniStat('Hadir', stats.hadir.toString(), const Color(0xFF16A34A)),
-                              _buildMiniStat('Izin', stats.izin.toString(), const Color(0xFF2563EB)),
-                              _buildMiniStat('Sakit', stats.sakit.toString(), const Color(0xFFD97706)),
-                              _buildMiniStat('Alpa', stats.alpa.toString(), const Color(0xFFDC2626)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Judul Bagian Pertemuan
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Expanded(
                           child: Text(
-                            'Riwayat Pertemuan Terdata',
+                            'Riwayat Kronologis Pertemuan',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -229,22 +177,33 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Text(
-                          '${meetings.length} Pertemuan',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade500,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${meetings.length} Pertemuan',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF475569),
+                            ),
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
                     if (meetings.isEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 36,
+                          horizontal: 20,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(16),
@@ -290,29 +249,6 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
     );
   }
 
-  Widget _buildMiniStat(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w900,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMeetingCard(SiswaKbmPertemuan item) {
     final statusBg = _getStatusBg(item.status);
     final statusText = _getStatusText(item.status);
@@ -343,7 +279,10 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -374,7 +313,7 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(12),
@@ -400,7 +339,11 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.calendar_today_rounded, size: 13, color: Colors.grey),
+              const Icon(
+                Icons.calendar_today_rounded,
+                size: 13,
+                color: Colors.grey,
+              ),
               const SizedBox(width: 6),
               Text(
                 '${item.hari}, ${item.tanggalFormatted}',
@@ -412,29 +355,46 @@ class SheetKbmSiswaSubjectDetail extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
             ),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.topic_outlined, size: 14, color: Color(0xFF64748B)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Materi: ${item.materi}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E293B),
-                    ),
+                const Text(
+                  'Materi Pembelajaran:',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF475569),
                   ),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  item.materi,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                if (item.uraianMateri.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    item.uraianMateri,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

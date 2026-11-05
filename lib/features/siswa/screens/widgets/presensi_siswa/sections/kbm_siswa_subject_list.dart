@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:apk_portal_smpn1_sampang/features/siswa/models/siswa_presensi_kbm_model.dart';
 import '../modals/sheet_kbm_siswa_subject_detail.dart';
 
-/// Daftar Kartu Mata Pelajaran (11-12 Mapel) dengan Statistik Pertemuan Terdata
+/// Daftar Kartu Mata Pelajaran (11-12 Mapel) dengan Grid 2x2 Kotak Status Kehadiran
+/// Mengacu pada tampilan /portal-siswa/jurnal-kbm (Hadir, Izin/Sakit, Alpa, Tidak Mengikuti)
 class KbmSiswaSubjectList extends StatelessWidget {
   final List<SiswaKbmSubject> subjects;
 
@@ -14,25 +15,44 @@ class KbmSiswaSubjectList extends StatelessWidget {
   IconData _getSubjectIcon(String namaMapel) {
     final lower = namaMapel.toLowerCase();
     if (lower.contains('matematika')) return Icons.calculate_rounded;
-    if (lower.contains('indonesia') || lower.contains('inggirs') || lower.contains('inggris') || lower.contains('jawa')) {
+    if (lower.contains('indonesia') ||
+        lower.contains('inggirs') ||
+        lower.contains('inggris') ||
+        lower.contains('jawa')) {
       return Icons.translate_rounded;
     }
-    if (lower.contains('informatika') || lower.contains('komputer') || lower.contains('tik')) {
+    if (lower.contains('informatika') ||
+        lower.contains('komputer') ||
+        lower.contains('tik')) {
       return Icons.computer_rounded;
     }
-    if (lower.contains('alam') || lower.contains('ipa')) return Icons.science_rounded;
-    if (lower.contains('sosial') || lower.contains('ips')) return Icons.public_rounded;
-    if (lower.contains('agama') || lower.contains('pai')) return Icons.menu_book_rounded;
-    if (lower.contains('jasmani') || lower.contains('pjok') || lower.contains('olahraga')) {
+    if (lower.contains('alam') || lower.contains('ipa')) {
+      return Icons.science_rounded;
+    }
+    if (lower.contains('sosial') || lower.contains('ips')) {
+      return Icons.public_rounded;
+    }
+    if (lower.contains('agama') || lower.contains('pai')) {
+      return Icons.menu_book_rounded;
+    }
+    if (lower.contains('jasmani') ||
+        lower.contains('pjok') ||
+        lower.contains('olahraga')) {
       return Icons.sports_volleyball_rounded;
     }
-    if (lower.contains('pancasila') || lower.contains('ppkn') || lower.contains('pkn')) {
+    if (lower.contains('pancasila') ||
+        lower.contains('ppkn') ||
+        lower.contains('pkn')) {
       return Icons.shield_rounded;
     }
-    if (lower.contains('seni') || lower.contains('budaya') || lower.contains('prakarya')) {
+    if (lower.contains('seni') ||
+        lower.contains('budaya') ||
+        lower.contains('prakarya')) {
       return Icons.palette_rounded;
     }
-    if (lower.contains('konseling') || lower.contains('bk')) return Icons.support_agent_rounded;
+    if (lower.contains('konseling') || lower.contains('bk')) {
+      return Icons.support_agent_rounded;
+    }
     return Icons.auto_stories_rounded;
   }
 
@@ -70,26 +90,31 @@ class KbmSiswaSubjectList extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(28),
         alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
         child: Column(
-            children: [
-              Icon(Icons.school_outlined, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 10),
-              Text(
-                'Tidak Ada Mata Pelajaran',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
-                ),
+          children: [
+            Icon(Icons.school_outlined, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 10),
+            Text(
+              'Tidak Ada Mata Pelajaran',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Data rombongan belajar Anda belum terdaftar di sistem pengajaran.',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Data rombongan belajar Anda belum terdaftar di sistem pengajaran.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       );
     }
 
@@ -99,25 +124,59 @@ class KbmSiswaSubjectList extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Mata Pelajaran Anda',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.layers_rounded,
+                        size: 18,
+                        color: Color(0xFF4F46E5),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Daftar Mata Pelajaran',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Klik mata pelajaran untuk melihat kronologi materi dan absensi:',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              '${subjects.length} Mapel',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade500,
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE0E7FF)),
+              ),
+              child: Text(
+                '${subjects.length} Mapel',
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF4338CA),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         ...subjects.asMap().entries.map((entry) {
           final index = entry.key;
           final subject = entry.value;
@@ -127,167 +186,323 @@ class KbmSiswaSubjectList extends StatelessWidget {
     );
   }
 
-  Widget _buildSubjectCard(BuildContext context, SiswaKbmSubject subject, int index) {
+  Widget _buildSubjectCard(
+    BuildContext context,
+    SiswaKbmSubject subject,
+    int index,
+  ) {
     final iconBg = _getIconBgColor(index);
     final iconColor = _getIconColor(index);
     final icon = _getSubjectIcon(subject.namaMapel);
     final stats = subject.stats;
+    final izinSakitTotal = stats.izin + stats.sakit;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           onTap: () {
             SheetKbmSiswaSubjectDetail.show(context, subject: subject);
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 24),
-                ),
-                const SizedBox(width: 14),
-
-                // Mapel & Guru
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subject.namaMapel,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                // 1. Header Kartu Mapel (Ikon + Nama Mapel & Guru)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subject.guruPengampu.name,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
+                      child: Icon(icon, color: iconColor, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (subject.hasData) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
+                          Text(
+                            subject.namaMapel,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline_rounded,
+                                size: 14,
+                                color: Colors.grey.shade500,
                               ),
-                              child: Text(
-                                '${stats.totalPertemuanTerdata} Pertemuan',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4F46E5),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  subject.guruPengampu.name,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                          ] else ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Belum Ada Jurnal',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                // Badge Kehadiran / Aksi
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (subject.hasData) ...[
+                    ),
+                    if (!subject.hasData) ...[
+                      const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: stats.persentaseKehadiran >= 85
-                              ? const Color(0xFFDCFCE7)
-                              : const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
                         ),
-                        child: Text(
-                          '${stats.persentaseKehadiran.toStringAsFixed(0)}%',
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: const Text(
+                          'Belum Ada Jurnal',
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: stats.persentaseKehadiran >= 85
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFFD97706),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF94A3B8),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${stats.hadir}/${stats.totalPertemuanTerdata} Hadir',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ] else ...[
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.grey.shade400,
-                        size: 20,
-                      ),
                     ],
                   ],
+                ),
+
+                const SizedBox(height: 14),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 12),
+
+                // 2. Breakdown Kehadiran Siswa Per Mapel (Kotak-Kotak 2x2)
+                if (subject.hasData) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatusBox(
+                          label: 'HADIR',
+                          value: '${stats.hadir} kali',
+                          bgColor: const Color(0xFFECFDF5),
+                          borderColor: const Color(0xFFA7F3D0),
+                          labelColor: const Color(0xFF059669),
+                          valueColor: const Color(0xFF047857),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStatusBox(
+                          label: 'IZIN / SAKIT',
+                          value: '$izinSakitTotal kali',
+                          subtitle: izinSakitTotal > 0
+                              ? '(${stats.izin} Izin, ${stats.sakit} Sakit)'
+                              : null,
+                          bgColor: const Color(0xFFEFF6FF),
+                          borderColor: const Color(0xFFBFDBFE),
+                          labelColor: const Color(0xFF2563EB),
+                          valueColor: const Color(0xFF1D4ED8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatusBox(
+                          label: 'ALPA',
+                          value: '${stats.alpa} kali',
+                          bgColor: const Color(0xFFFFFBEB),
+                          borderColor: const Color(0xFFFDE68A),
+                          labelColor: const Color(0xFFD97706),
+                          valueColor: const Color(0xFFB45309),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStatusBox(
+                          label: 'TIDAK MENGIKUTI',
+                          value: '${stats.tidakMengikuti} kali',
+                          bgColor: const Color(0xFFFFF1F2),
+                          borderColor: const Color(0xFFFECDD3),
+                          labelColor: const Color(0xFFE11D48),
+                          valueColor: const Color(0xFFBE123C),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Pertemuan Terdata:',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '${stats.totalPertemuanTerdata} Pertemuan',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: const Text(
+                      'Belum ada catatan pertemuan KBM',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+
+                // 3. Tombol Lihat Riwayat KBM
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Lihat Riwayat KBM',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: Color(0xFF475569),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBox({
+    required String label,
+    required String value,
+    String? subtitle,
+    required Color bgColor,
+    required Color borderColor,
+    required Color labelColor,
+    required Color valueColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: labelColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: valueColor,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: labelColor,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
