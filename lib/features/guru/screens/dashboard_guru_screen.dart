@@ -9,6 +9,7 @@ import '../../auth/screens/login_screen.dart';
 import '../../notification/screens/notification_inbox_screen.dart';
 import '../models/guru_profil_model.dart';
 import 'data_siswa_screen.dart';
+import 'form_jurnal_mengajar_screen.dart';
 import 'guru_wali_screen.dart';
 import 'ijin_kehadiran_screen.dart';
 import 'jurnal_mengajar_screen.dart';
@@ -186,18 +187,39 @@ class _DashboardGuruScreenState extends State<DashboardGuruScreen> {
   }
 
   void _openJurnalMengajarMenu() {
-    Navigator.of(context)
-        .push(
-          MaterialPageRoute(
-            builder: (_) => JurnalMengajarScreen(
-              teacherName: _resolvedTeacherName ?? widget.teacherName,
-              token: widget.token,
-              identifier: widget.identifier,
-              schoolName: widget.schoolName,
-            ),
-          ),
-        )
-        .then((_) => _fetchSummary());
+    final teacherName = _resolvedTeacherName ?? widget.teacherName;
+    DialogPilihanJurnalMengajar.show(
+      context,
+      jurnalHariIniCount: _jurnalHariIniCount,
+      totalJurnalCount: _totalJurnalCount,
+      onTambahJurnal: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (_) => FormJurnalMengajarScreen(
+                  teacherName: teacherName,
+                  token: widget.token,
+                  identifier: widget.identifier,
+                ),
+              ),
+            )
+            .then((_) => _fetchSummary());
+      },
+      onLihatJurnal: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (_) => JurnalMengajarScreen(
+                  teacherName: teacherName,
+                  token: widget.token,
+                  identifier: widget.identifier,
+                  schoolName: widget.schoolName,
+                ),
+              ),
+            )
+            .then((_) => _fetchSummary());
+      },
+    );
   }
 
   void _openIjinMenu() {
