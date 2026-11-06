@@ -17,8 +17,8 @@ class IjinSegmentedTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      {'key': 'all', 'label': 'Semua', 'badge': 0},
       {'key': 'pending', 'label': 'Menunggu', 'badge': pendingCount},
+      {'key': 'all', 'label': 'Semua', 'badge': 0},
       {'key': 'approved', 'label': 'Disetujui', 'badge': 0},
       {'key': 'rejected', 'label': 'Ditolak', 'badge': 0},
     ];

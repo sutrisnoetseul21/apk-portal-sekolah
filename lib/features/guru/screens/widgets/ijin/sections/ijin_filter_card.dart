@@ -32,6 +32,19 @@ class IjinFilterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool hasMultipleClasses = accessibleClasses.length > 1;
 
+    // Pastikan opsi 'Semua Bulan' (key: 'all') selalu tersedia di urutan pertama
+    final List<Map<String, dynamic>> normalizedMonths = [
+      if (!availableMonths.any((m) => m['key']?.toString() == 'all'))
+        {'key': 'all', 'label': 'Semua Bulan'},
+      ...availableMonths,
+    ];
+
+    final String effectiveMonthKey = (selectedMonthKey != null &&
+            normalizedMonths
+                .any((m) => m['key']?.toString() == selectedMonthKey))
+        ? selectedMonthKey!
+        : 'all';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -128,7 +141,7 @@ class IjinFilterCard extends StatelessWidget {
               // 2. Filter Bulan
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: selectedMonthKey,
+                  value: effectiveMonthKey,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'BULAN PENGAJUAN',
@@ -141,7 +154,7 @@ class IjinFilterCard extends StatelessWidget {
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  items: availableMonths
+                  items: normalizedMonths
                       .map(
                         (m) => DropdownMenuItem<String>(
                           value: m['key']?.toString(),

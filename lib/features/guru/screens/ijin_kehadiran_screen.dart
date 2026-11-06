@@ -8,7 +8,6 @@ import '../services/ijin_kehadiran_service.dart';
 import 'widgets/ijin/cards/leave_request_card.dart';
 import 'widgets/ijin/modals/modal_detail_ijin.dart';
 import 'widgets/ijin/sections/ijin_filter_card.dart';
-import 'widgets/ijin/sections/ijin_hero_banner.dart';
 import 'widgets/ijin/sections/ijin_metric_cards.dart';
 import 'widgets/ijin/sections/ijin_pagination_bar.dart';
 import 'widgets/ijin/sections/ijin_segmented_tabs.dart';
@@ -37,7 +36,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
   late final IjinKehadiranService _service;
 
   bool _isLoading = true;
-  String _activeTab = 'all'; // 'all', 'pending', 'approved', 'rejected'
+  // Default langsung diarahkan ke siswa yang menunggu persetujuan ('pending')
+  String _activeTab = 'pending'; // 'pending', 'all', 'approved', 'rejected'
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -45,7 +45,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
   List<Map<String, dynamic>> _accessibleClasses = [];
   String? _selectedClassId;
   List<Map<String, dynamic>> _availableMonths = [];
-  String? _selectedMonthKey;
+  // Default 'all' (Semua Bulan) agar seluruh pengajuan pending lintas bulan langsung tampil
+  String? _selectedMonthKey = 'all';
 
   // Stats & Info
   Map<String, dynamic> _todayStats = {
@@ -87,6 +88,17 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
     super.dispose();
   }
 
+  void _selectStatusTab(String tab) {
+    setState(() {
+      _activeTab = tab;
+      // Saat berpindah ke tab 'Menunggu', pastikan tidak tersembunyi oleh filter bulan tunggal
+      if (tab == 'pending') {
+        _selectedMonthKey = 'all';
+      }
+    });
+    _loadData(page: 1);
+  }
+
   Future<void> _loadData({int page = 1}) async {
     setState(() => _isLoading = true);
     try {
@@ -116,10 +128,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
           _userInfo = res.userInfo;
           _academicYear = res.academicYear;
 
-          if (_selectedMonthKey == null && _availableMonths.isNotEmpty) {
-            _selectedMonthKey = _availableMonths.first['key']?.toString();
-          }
-
+          _selectedMonthKey ??= 'all';
           _isLoading = false;
         });
       }
@@ -128,8 +137,8 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Gagal memuat data: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+                'Gagal memuat data: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: const Color(0xFFDC2626),
             behavior: SnackBarBehavior.floating,
           ),
@@ -153,10 +162,18 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
     final approvedCount = (_todayStats['approved'] as num?)?.toInt() ?? 0;
     final rejectedCount = (_todayStats['rejected'] as num?)?.toInt() ?? 0;
 
-    final roleSummary =
-        _userInfo['role_summary']?.toString() ?? 'Wali Kelas';
+    final roleSummary = _userInfo['role_summary']?.toString() ?? 'Wali Kelas';
     final academicName =
         _academicYear['name']?.toString() ?? 'Tahun Ajaran Aktif';
+    final schoolLabel =
+        widget.schoolName.isNotEmpty ? widget.schoolName : AppConfig.appName;
+
+    final String listTitle = switch (_activeTab) {
+      'pending' => 'Menunggu Persetujuan ($_totalItems)',
+      'approved' => 'Permohonan Disetujui ($_totalItems)',
+      'rejected' => 'Permohonan Ditolak ($_totalItems)',
+      _ => 'Semua Permohonan ($_totalItems)',
+    };
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -169,9 +186,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             Text(
-              widget.schoolName.isNotEmpty
-                  ? widget.schoolName
-                  : AppConfig.appName,
+              '$schoolLabel • $academicName • $roleSummary',
               style: const TextStyle(fontSize: 11, color: Colors.white70),
             ),
           ],
@@ -193,41 +208,27 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. HERO BANNER
-              IjinHeroBanner(
-                roleSummary: roleSummary,
-                academicName: academicName,
-              ),
-
-              const SizedBox(height: 14),
-
-              // 2. METRIC SUMMARY CARDS
+              // 1. METRIC SUMMARY CARDS
               IjinMetricCards(
                 pendingCount: pendingCount,
                 approvedCount: approvedCount,
                 rejectedCount: rejectedCount,
                 activeTab: _activeTab,
-                onTabSelected: (tab) {
-                  setState(() => _activeTab = tab);
-                  _loadData(page: 1);
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // 3. SEGMENTED TABS FILTER
-              IjinSegmentedTabs(
-                activeTab: _activeTab,
-                pendingCount: pendingCount,
-                onTabChanged: (tab) {
-                  setState(() => _activeTab = tab);
-                  _loadData(page: 1);
-                },
+                onTabSelected: _selectStatusTab,
               ),
 
               const SizedBox(height: 14),
 
-              // 4. FILTER KELAS, BULAN & PENCARIAN SISWA
+              // 2. SEGMENTED TABS FILTER (Menunggu di urutan pertama)
+              IjinSegmentedTabs(
+                activeTab: _activeTab,
+                pendingCount: pendingCount,
+                onTabChanged: _selectStatusTab,
+              ),
+
+              const SizedBox(height: 12),
+
+              // 3. FILTER KELAS, BULAN & PENCARIAN SISWA
               IjinFilterCard(
                 accessibleClasses: _accessibleClasses,
                 selectedClassId: _selectedClassId,
@@ -259,12 +260,12 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 
               const SizedBox(height: 16),
 
-              // 5. DAFTAR PERMOHONAN SISWA
+              // 4. DAFTAR PERMOHONAN SISWA
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Daftar Permohonan ($_totalItems)',
+                    listTitle,
                     style: const TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w900,
@@ -309,7 +310,7 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
 
               const SizedBox(height: 16),
 
-              // 6. PAGINASI KONTROL
+              // 5. PAGINASI KONTROL
               if (_lastPage > 1)
                 IjinPaginationBar(
                   currentPage: _currentPage,
@@ -326,8 +327,13 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
   }
 
   Widget _buildEmptyState() {
+    final bool isPendingTab = _activeTab == 'pending' &&
+        (_selectedClassId == null || _selectedClassId!.isEmpty) &&
+        _searchQuery.isEmpty &&
+        (_selectedMonthKey == null || _selectedMonthKey == 'all');
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -337,45 +343,61 @@ class _IjinKehadiranScreenState extends State<IjinKehadiranScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9),
+            decoration: BoxDecoration(
+              color: isPendingTab
+                  ? const Color(0xFFECFDF5)
+                  : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.inbox_rounded,
+            child: Icon(
+              isPendingTab ? Icons.task_alt_rounded : Icons.inbox_rounded,
               size: 38,
-              color: Color(0xFF94A3B8),
+              color: isPendingTab
+                  ? const Color(0xFF059669)
+                  : const Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Belum Ada Permohonan Izin',
-            style: TextStyle(
+          Text(
+            isPendingTab
+                ? 'Tidak Ada Permohonan Menunggu'
+                : 'Belum Ada Permohonan Izin',
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Tidak ada data yang sesuai dengan filter atau kata kunci saat ini.',
+          Text(
+            isPendingTab
+                ? 'Semua pengajuan izin atau sakit siswa di kelas binaan Anda telah diverifikasi.'
+                : 'Tidak ada data yang sesuai dengan filter atau kata kunci saat ini.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: () {
               setState(() {
                 _activeTab = 'all';
-                _selectedClassId = '';
+                _selectedClassId = null;
+                _selectedMonthKey = 'all';
                 _searchQuery = '';
                 _searchController.clear();
               });
               _loadData(page: 1);
             },
-            icon: const Icon(Icons.refresh_rounded, size: 15),
-            label: const Text('Reset Filter & Muat Ulang',
-                style: TextStyle(fontSize: 12)),
+            icon: Icon(
+              isPendingTab ? Icons.history_rounded : Icons.refresh_rounded,
+              size: 15,
+            ),
+            label: Text(
+              isPendingTab
+                  ? 'Lihat Semua Riwayat Izin'
+                  : 'Reset Filter & Lihat Semua',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
         ],
       ),

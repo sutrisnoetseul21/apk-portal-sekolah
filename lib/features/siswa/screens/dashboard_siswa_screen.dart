@@ -8,6 +8,7 @@ import '../../auth/screens/login_screen.dart';
 import '../../notification/screens/notification_inbox_screen.dart';
 import '../models/siswa_dashboard_model.dart';
 import '../services/siswa_dashboard_service.dart';
+import 'form_ijin_siswa_screen.dart';
 import 'guru_wali_siswa_screen.dart';
 import 'ijin_kehadiran_siswa_screen.dart';
 import 'kartu_siswa_screen.dart';
@@ -174,25 +175,43 @@ class _DashboardSiswaScreenState extends State<DashboardSiswaScreen> {
     );
   }
 
-  void _navigateToIjinKehadiran() async {
+  void _navigateToIjinKehadiran() {
     final currentStudentName = _summary?.student.name ?? widget.studentName;
     final currentIdentifier = _summary?.student.nisn ?? widget.identifier;
+    final pendingCount = _summary?.quickStats.pendingLeavesCount ?? 0;
 
-    await Navigator.push(
+    DialogPilihanIjinSiswa.show(
       context,
-      MaterialPageRoute(
-        builder: (_) => IjinKehadiranSiswaScreen(
-          identifier: currentIdentifier,
-          studentName: currentStudentName,
-          schoolName: _schoolName,
-          token: widget.token,
-          schoolLogoUrl: _schoolLogoUrl,
-          schoolLogoBase64: _schoolLogoBase64,
-        ),
-      ),
+      pendingLeavesCount: pendingCount,
+      onAjukanIjinBaru: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FormIjinSiswaScreen(
+              identifier: currentIdentifier,
+              studentName: currentStudentName,
+              schoolName: _schoolName,
+              token: widget.token,
+            ),
+          ),
+        ).then((_) => _fetchSummary());
+      },
+      onLihatRiwayat: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => IjinKehadiranSiswaScreen(
+              identifier: currentIdentifier,
+              studentName: currentStudentName,
+              schoolName: _schoolName,
+              token: widget.token,
+              schoolLogoUrl: _schoolLogoUrl,
+              schoolLogoBase64: _schoolLogoBase64,
+            ),
+          ),
+        ).then((_) => _fetchSummary());
+      },
     );
-
-    _fetchSummary();
   }
 
   void _navigateToGuruWali() async {

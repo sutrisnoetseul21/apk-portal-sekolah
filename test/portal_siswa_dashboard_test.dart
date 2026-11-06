@@ -84,6 +84,14 @@ void main() {
     expect(find.text('Lihat Kartu PDF'), findsOneWidget);
     expect(find.text('Buka Profil'), findsOneWidget);
 
+    // Klik menu Pengajuan Ijin Kehadiran -> harus muncul pop-up pilihan cepat
+    await tester.ensureVisible(find.text('Ajukan Ijin'));
+    await tester.tap(find.text('Ajukan Ijin'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ajukan Ijin / Sakit Baru'), findsOneWidget);
+    expect(find.text('Lihat Riwayat Pengajuan'), findsOneWidget);
+
     addTearDown(() => tester.binding.setSurfaceSize(null));
   });
 }

@@ -173,3 +173,296 @@ class DashboardSiswaMenuGrid extends StatelessWidget {
   }
 }
 
+/// Pop-up Dialog Pilihan Cepat Menu Pengajuan Ijin Kehadiran Siswa
+/// (Ajukan Ijin / Sakit Baru vs Lihat Riwayat Pengajuan)
+class DialogPilihanIjinSiswa extends StatelessWidget {
+  final int pendingLeavesCount;
+  final VoidCallback onAjukanIjinBaru;
+  final VoidCallback onLihatRiwayat;
+
+  const DialogPilihanIjinSiswa({
+    super.key,
+    required this.pendingLeavesCount,
+    required this.onAjukanIjinBaru,
+    required this.onLihatRiwayat,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    required int pendingLeavesCount,
+    required VoidCallback onAjukanIjinBaru,
+    required VoidCallback onLihatRiwayat,
+  }) {
+    return showDialog(
+      context: context,
+      builder: (ctx) => DialogPilihanIjinSiswa(
+        pendingLeavesCount: pendingLeavesCount,
+        onAjukanIjinBaru: () {
+          Navigator.of(ctx).pop();
+          onAjukanIjinBaru();
+        },
+        onLihatRiwayat: () {
+          Navigator.of(ctx).pop();
+          onLihatRiwayat();
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header Pop-up
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE4E6),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.assignment_outlined,
+                      color: Color(0xFFE11D48),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pengajuan Ijin Kehadiran',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          pendingLeavesCount > 0
+                              ? '$pendingLeavesCount permohonan sedang menunggu verifikasi'
+                              : 'Ijin & sakit online terintegrasi presensi kelas',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: pendingLeavesCount > 0
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF64748B),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF94A3B8),
+                      size: 20,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Tutup',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 16),
+
+              const Text(
+                'Pilih aksi yang ingin kamu lakukan:',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Opsi 1: Ajukan Ijin / Sakit Baru (Utama)
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onAjukanIjinBaru,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Ink(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFBE123C), Color(0xFFE11D48)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE11D48).withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.add_task_rounded,
+                            color: Colors.white,
+                            size: 23,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ajukan Ijin / Sakit Baru',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Isi formulir permohonan & unggah surat bukti',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Opsi 2: Lihat Riwayat Pengajuan
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onLihatRiwayat,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Ink(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE4E6),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.history_edu_rounded,
+                            color: Color(0xFFE11D48),
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Flexible(
+                                    child: Text(
+                                      'Lihat Riwayat Pengajuan',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                  ),
+                                  if (pendingLeavesCount > 0) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '$pendingLeavesCount Menunggu',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFD97706),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Pantau status verifikasi Wali Kelas & riwayat ijin',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Color(0xFF64748B),
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
