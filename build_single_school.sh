@@ -15,7 +15,7 @@ fi
 
 case "$SCHOOL_KEY" in
   "smpn1majenang")
-    APP_NAME="Portal SMPN 1 Majenang"
+    APP_NAME="PORTAL SMPN1 Majenang"
     BASE_URL="https://smpn1majenang.sch.id/api/v1"
     SCHOOL_CODE="20528991"
     ;;
