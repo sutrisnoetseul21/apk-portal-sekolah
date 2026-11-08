@@ -194,10 +194,32 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
 
-      throw Exception(response.data['message'] ?? 'Login gagal');
+      final errorMsg = response.data?['message']?.toString() ?? 'Login gagal. Periksa kembali kredensial Anda.';
+      _showLoginError(errorMsg);
+    } on DioException catch (dioErr) {
+      String message = 'Terjadi kesalahan saat menghubungi server.';
+
+      if (dioErr.response != null) {
+        final resData = dioErr.response?.data;
+        if (resData is Map && resData['message'] != null) {
+          message = resData['message'].toString();
+        } else if (dioErr.response?.statusCode == 401) {
+          message = 'Kredensial tidak cocok. Periksa kembali NISN/NIP dan kata sandi Anda.';
+        } else if (dioErr.response?.statusCode == 429) {
+          message = 'Terlalu banyak percobaan gagal. Silakan tunggu beberapa saat.';
+        } else if (dioErr.response?.statusCode == 500) {
+          message = 'Server mengalami gangguan sementara. Silakan coba lagi.';
+        }
+      } else if (dioErr.type == DioExceptionType.connectionTimeout ||
+          dioErr.type == DioExceptionType.receiveTimeout) {
+        message = 'Koneksi ke server waktu habis (Timeout). Periksa koneksi internet Anda.';
+      } else if (dioErr.type == DioExceptionType.connectionError) {
+        message = 'Tidak dapat terhubung ke server ($_currentServer). Periksa jaringan internet.';
+      }
+
+      _showLoginError(message);
     } catch (e) {
-      // Jika jaringan belum terhubung ke server nyata, sediakan deteksi cerdas role untuk testing
-      _handleOfflineOrError(identifier, e);
+      _showLoginError('Login gagal: ${e.toString().replaceAll('Exception: ', '')}');
     } finally {
       if (mounted) {
         setState(() {
@@ -207,36 +229,27 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Fallback cerdas jika server offline / saat tahap pengujian lokal
-  void _handleOfflineOrError(String identifier, Object error) {
-    final isDigitsOnly = RegExp(r'^[0-9]+$').hasMatch(identifier);
-    final isStudentGuess = isDigitsOnly && identifier.length <= 12;
-
+  void _showLoginError(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'Mode Coba Cepat: Masuk sebagai ${isStudentGuess ? "Siswa (NISN)" : "Guru/Staf (NIP)"}',
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5),
+              ),
+            ),
+          ],
         ),
-        backgroundColor: AppColors.primaryLight,
-        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFFDC2626), // Merah peringatan
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
       ),
     );
-
-    if (isStudentGuess) {
-      _navigateByRole(
-        role: 'siswa',
-        name: 'Siswa Percobaan',
-        identifier: identifier,
-        roleLabel: 'Siswa Aktif',
-      );
-    } else {
-      _navigateByRole(
-        role: 'guru',
-        name: 'Bpk/Ibu Guru',
-        identifier: identifier,
-        roleLabel: 'Guru / Wali Kelas',
-      );
-    }
   }
 
   /// Navigasi terpisah: Siswa diarahkan ke Portal Siswa, Guru ke Portal Guru
