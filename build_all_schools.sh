@@ -78,7 +78,7 @@ build_school "smpn3kedungreja" "Portal SMPN3 Kedungreja" "https://smpn3kedungrej
 build_school "smpn1majenang" "Portal SMPN 1 Majenang" "https://smpn1majenang.sch.id/api/v1" "20528991"
 
 # 3. SMP Negeri 1 Sampang
-build_school "smpn1sampang" "Portal SMPN 1 Sampang" "https://smp1sampang.sch.id/api/v1" "20528992"
+build_school "smpn1sampang" "PORTAL SMPN1 Sampang" "https://smp1sampang.sch.id/api/v1" "20528992"
 
 # 4. SMP Negeri 1 Jeruklegi
 build_school "smpn1jeruklegi" "Portal SMPN 1 Jeruklegi" "https://smpn1jeruklegi.sch.id/api/v1" "20528993"
