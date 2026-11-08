@@ -72,7 +72,7 @@ EOF
 # ==============================================================================
 
 # 1. SMP Negeri 3 Kedungreja
-build_school "smpn3kedungreja" "Portal SMPN 3 Kedungreja" "https://smpn3kedungreja.sch.id/api/v1" "20528990"
+build_school "smpn3kedungreja" "Portal SMPN3 Kedungreja" "https://smpn3kedungreja.sch.id/api/v1" "20331747"
 
 # 2. SMP Negeri 1 Majenang
 build_school "smpn1majenang" "Portal SMPN 1 Majenang" "https://smpn1majenang.sch.id/api/v1" "20528991"

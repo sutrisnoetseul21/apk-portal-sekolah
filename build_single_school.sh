@@ -20,7 +20,7 @@ case "$SCHOOL_KEY" in
     SCHOOL_CODE="20528991"
     ;;
   "smpn3kedungreja")
-    APP_NAME="Portal SMPN 3 Kedungreja"
+    APP_NAME="Portal SMPN3 Kedungreja"
     BASE_URL="https://smpn3kedungreja.sch.id/api/v1"
     SCHOOL_CODE="20331747"
     ;;

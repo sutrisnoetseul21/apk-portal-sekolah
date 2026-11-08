@@ -39,8 +39,9 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
   int _durationDays = 1;
   final TextEditingController _reasonController = TextEditingController();
 
-  // Lampiran terkompresi
+  // Lampiran terkompresi (Maksimal 1 foto, wajib diisi)
   final List<CompressedImageResult> _compressedAttachments = [];
+  bool _showPhotoError = false;
 
   // Pengecekan Hari Libur
   bool _isCheckingHolidays = false;
@@ -158,16 +159,6 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (_compressedAttachments.length >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Batas maksimal 5 lampiran berkas.'),
-          backgroundColor: Color(0xFFDC2626),
-        ),
-      );
-      return;
-    }
-
     final result = await ImageCompressUtil.pickAndCompressImage(
       source: source,
       maxWidth: 1280,
@@ -177,7 +168,11 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
 
     if (result != null && mounted) {
       setState(() {
-        _compressedAttachments.add(result);
+        // Hanya menyimpan 1 foto bukti (jika sudah ada foto sebelumnya, otomatis diganti)
+        _compressedAttachments
+          ..clear()
+          ..add(result);
+        _showPhotoError = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -202,42 +197,31 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
+    final isFormValid = _formKey.currentState!.validate();
+    final isPhotoEmpty = _compressedAttachments.isEmpty;
 
-    if (_selectedType == 'sakit' && _compressedAttachments.isEmpty) {
-      final proceed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.info_outline_rounded, color: Color(0xFFD97706)),
-              SizedBox(width: 8),
-              Text('Lampiran Surat Dokter'),
-            ],
-          ),
-          content: const Text(
-            'Anda memilih permohonan Sakit tetapi belum mengunggah foto surat dokter/orang tua. Apakah Anda tetap ingin mengirimkan permohonan ini?',
-            style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal & Unggah Foto', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Tetap Kirim'),
-            ),
-          ],
+    if (isPhotoEmpty) {
+      setState(() => _showPhotoError = true);
+    }
+
+    if (!isFormValid || isPhotoEmpty) {
+      String errorMsg = 'Mohon lengkapi data pengajuan izin.';
+      if (!isFormValid && isPhotoEmpty) {
+        errorMsg =
+            'Alasan / keterangan dan 1 bukti foto surat wajib diisi.';
+      } else if (!isFormValid) {
+        errorMsg = 'Alasan / keterangan wajib diisi (minimal 3 karakter).';
+      } else if (isPhotoEmpty) {
+        errorMsg = 'Bukti foto / surat lampiran wajib diunggah (1 foto).';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: const Color(0xFFDC2626),
         ),
       );
-
-      if (proceed != true) return;
+      return;
     }
 
     setState(() {
@@ -283,6 +267,8 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
   }
 
   Widget _buildReasonField() {
+    final bool hasReason = _reasonController.text.trim().length >= 3;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -293,15 +279,68 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Alasan / Keterangan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '*',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: hasReason
+                      ? const Color(0xFFECFDF5)
+                      : const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  hasReason ? 'Terisi' : 'Wajib Diisi',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: hasReason
+                        ? const Color(0xFF059669)
+                        : const Color(0xFFDC2626),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
           const Text(
-            'Alasan / Keterangan (Maks. 200 Karakter)',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            'Tuliskan alasan izin atau keluhan sakit secara jelas (minimal 3 karakter, maks. 200 karakter).',
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 10),
           TextFormField(
             controller: _reasonController,
             maxLines: 3,
             maxLength: 200,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: _selectedType == 'sakit'
                   ? 'Contoh: Mengalami demam tinggi dan flu, beristirahat sesuai anjuran dokter.'
@@ -322,16 +361,24 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppColors.primary, width: 2),
               ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+              ),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Alasan izin wajib diisi.';
+                return 'Alasan / keterangan wajib diisi.';
               }
               if (value.trim().length < 3) {
-                return 'Alasan minimal 3 karakter.';
+                return 'Alasan / keterangan minimal 3 karakter.';
               }
               if (value.trim().length > 200) {
-                return 'Alasan tidak boleh lebih dari 200 karakter.';
+                return 'Alasan / keterangan maksimal 200 karakter.';
               }
               return null;
             },
@@ -411,9 +458,10 @@ class _FormIjinSiswaScreenState extends State<FormIjinSiswaScreen> {
 
               const SizedBox(height: 18),
 
-              // 5. Upload Foto dengan Kompresi Otomatis Ala WhatsApp
+              // 5. Upload 1 Foto Bukti (Wajib) dengan Kompresi Otomatis Ala WhatsApp
               FormIjinPhotoUploader(
                 attachments: _compressedAttachments,
+                showError: _showPhotoError,
                 onPickImage: _pickImage,
                 onRemoveAttachment: (index) => setState(() => _compressedAttachments.removeAt(index)),
               ),

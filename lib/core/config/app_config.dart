@@ -6,19 +6,19 @@ class AppConfig {
   /// Base URL API Laravel Backend
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'https://coba.haflaitsolution.my.id/api/v1',
+    defaultValue: 'https://smpn3kedungreja.sch.id/api/v1',
   );
 
   /// Nama Aplikasi yang ditampilkan di UI
   static const String appName = String.fromEnvironment(
     'APP_NAME',
-    defaultValue: 'SMP Negeri 3 Kedungreja',
+    defaultValue: 'Portal SMPN3 Kedungreja',
   );
 
   /// Kode Unik / NPSN Sekolah
   static const String schoolCode = String.fromEnvironment(
     'SCHOOL_CODE',
-    defaultValue: '20528990',
+    defaultValue: '20331747',
   );
 
   /// Warna Primer Sekolah (Format Hex: 0xFF1E40AF)
